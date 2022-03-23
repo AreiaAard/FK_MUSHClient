@@ -144,6 +144,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^(?<speaker>.+) says?, OOC '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.osay"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -193,6 +202,16 @@ end
 function Communication.yell(trigger, line, wc)
     Communication.event{
         channel = "yell",
+        speaker = wc.speaker,
+        message = wc.message,
+        line = line,
+    }
+end
+
+
+function Communication.osay(trigger, line, wc)
+    Communication.event{
+        channel = "osay",
         speaker = wc.speaker,
         message = wc.message,
         line = line,
