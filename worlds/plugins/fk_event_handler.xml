@@ -135,6 +135,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^(?<speaker>.+) yells?,? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.yell"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -176,6 +185,17 @@ function Communication.tell(trigger, line, wc)
         channel = "tell",
         speaker = wc.speaker,
         receiver = wc.receiver,
+        message = wc.message,
+        line = line,
+    }
+    Communication.event(data)
+end
+
+
+function Communication.yell(trigger, line, wc)
+    local data = {
+        channel = "yell",
+        speaker = wc.speaker,
         message = wc.message,
         line = line,
     }
