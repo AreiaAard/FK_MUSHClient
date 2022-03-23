@@ -126,6 +126,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^(?<speaker>.+) tells? (?<receiver>.+),? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.tell"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -154,6 +163,23 @@ function Communication.say(trigger, line, wc)
         line = line,
     }
     Communication.event("say", data)
+end
+
+
+function Communication.tell(trigger, line, wc)
+    if not (wc.speaker == "You" or wc.receiver == "you") then
+        -- Probably a smoted message, not an actual tell to player.
+        return
+    end
+
+    local data = {
+        channel = "tell",
+        speaker = wc.speaker,
+        receiver = wc.receiver,
+        message = wc.message,
+        line = line,
+    }
+    Communication.event("tell", data)
 end
 ]]>
 </script>
