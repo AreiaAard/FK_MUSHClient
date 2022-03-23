@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+    name="FK_Event_Handler"
+    author="Areia"
+    id="35365d0a213358e5f89e11cd"
+    language="Lua"
+    purpose="Track and broadcast events"
+    save_state="n"
+    date_written="2022-03-23 17:00:00"
+    requires="5.06"
+    version="0.00"
+>
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+
+<aliases>
+</aliases>
+
+
+<triggers>
+</triggers>
+
+
+<script>
+<![CDATA[
+require("commas")
+require("serialize")
+require("tprint")
+require("var")
+require("wait")
+local const = require("fk_const")
+
+
+
+]]>
+</script>
+
+
+</muclient>
