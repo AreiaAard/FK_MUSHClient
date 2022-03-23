@@ -108,4 +108,55 @@ end
 </script>
 
 
+
+<triggers>
+    <trigger
+     match="^(?<speaker>.+) (?<verb>ask|exclaim|say)s?,? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.say"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     match="^(?<speaker>.+) (?<verb>ask|exclaim|say)s? to (?<receiver>.+),? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.say"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Communication
+--------------------------------------------------
+
+
+Communication = {}
+
+
+function Communication.event(channel, data)
+    local path = "comm." .. channel
+    EventHandler.event(const.EVENT_TYPE.COMMUNICATION, path, data)
+end
+
+
+function Communication.say(trigger, line, wc)
+    local data = {
+        channel = "say",
+        speaker = wc.speaker,
+        receiver = wc.receiver or "",
+        message = wc.message,
+        line = line,
+    }
+    Communication.event("say", data)
+end
+]]>
+</script>
+
+
 </muclient>
