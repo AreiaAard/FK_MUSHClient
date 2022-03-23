@@ -164,14 +164,13 @@ end
 
 
 function Communication.say(trigger, line, wc)
-    local data = {
+    Communication.event{
         channel = "say",
         speaker = wc.speaker,
         receiver = wc.receiver or "",
         message = wc.message,
         line = line,
     }
-    Communication.event(data)
 end
 
 
@@ -181,25 +180,23 @@ function Communication.tell(trigger, line, wc)
         return
     end
 
-    local data = {
+    Communication.event{
         channel = "tell",
         speaker = wc.speaker,
         receiver = wc.receiver,
         message = wc.message,
         line = line,
     }
-    Communication.event(data)
 end
 
 
 function Communication.yell(trigger, line, wc)
-    local data = {
+    Communication.event{
         channel = "yell",
         speaker = wc.speaker,
         message = wc.message,
         line = line,
     }
-    Communication.event(data)
 end
 ]]>
 </script>
