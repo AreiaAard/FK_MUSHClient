@@ -42,7 +42,68 @@ require("wait")
 local const = require("fk_const")
 
 
+--------------------------------------------------
+-- EventHandler
+-------------------------------------------------
 
+
+EventHandler = {}
+EventHandler.cache = {}
+
+
+function EventHandler.event(eventType, path, data)
+    local errorMsg = "Arg%d to EventHandler.event must be %s. Got %s."
+    assert(
+        type(eventType) == "number",
+        errorMsg:format(1, "number", type(eventType))
+    )
+    assert(
+        type(path) == "string",
+        errorMsg:format(2, "string", type(path))
+    )
+    assert(
+        type(data) == "table",
+        errorMsg:format(3, "table", type(data))
+    )
+
+    -- Find where to store info, and build path to that location if
+    -- necessary as we go.
+    local node = EventHandler.cache
+    local prevNode = nil
+    local prevLevel = ""
+    for level in path:gmatch("%a+") do
+        node[level] = node[level] or {}
+        prevNode = node
+        prevLevel = level
+        node = node[level]
+    end
+    prevNode[prevLevel] = data
+
+    BroadcastPlugin(eventType, path)
+end
+
+
+function EventHandler.get(path)
+    local errorMsg = "Arg1 to EventHandler.get must be string. Got %s."
+    assert(
+        type(path) == "string",
+        errorMsg:format(type(path))
+    )
+
+    local node = EventHandler.cache
+    for level in path:gmatch("%a+") do
+        if (not node[level]) then
+            return nil
+        end
+        node = node[level]
+    end
+    return node
+end
+
+
+function EventHandler.get_as_string(path)
+    return serialize.save_simple(EventHandler.get(path) or "")
+end
 ]]>
 </script>
 
