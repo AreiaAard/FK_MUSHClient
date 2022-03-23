@@ -148,8 +148,8 @@ end
 Communication = {}
 
 
-function Communication.event(channel, data)
-    local path = "comm." .. channel
+function Communication.event(data)
+    local path = "comm." .. data.channel
     EventHandler.event(const.EVENT_TYPE.COMMUNICATION, path, data)
 end
 
@@ -162,7 +162,7 @@ function Communication.say(trigger, line, wc)
         message = wc.message,
         line = line,
     }
-    Communication.event("say", data)
+    Communication.event(data)
 end
 
 
@@ -179,7 +179,7 @@ function Communication.tell(trigger, line, wc)
         message = wc.message,
         line = line,
     }
-    Communication.event("tell", data)
+    Communication.event(data)
 end
 ]]>
 </script>
