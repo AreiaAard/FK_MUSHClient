@@ -153,6 +153,14 @@ end
      sequence="100"
     >
     </trigger>
+    <trigger
+     match="^(?<speaker>.+) tells? (?<receiver>.+), OOC '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.otell"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -213,6 +221,22 @@ function Communication.osay(trigger, line, wc)
     Communication.event{
         channel = "osay",
         speaker = wc.speaker,
+        message = wc.message,
+        line = line,
+    }
+end
+
+
+function Communication.otell(trigger, line, wc)
+    if not (wc.speaker == "You" or wc.receiver == "you") then
+        -- Probably a smoted message, not an actual tell to player.
+        return
+    end
+
+    Communication.event{
+        channel = "otell",
+        speaker = wc.speaker,
+        receiver = wc.receiver,
         message = wc.message,
         line = line,
     }
