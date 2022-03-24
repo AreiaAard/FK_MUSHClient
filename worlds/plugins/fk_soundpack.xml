@@ -49,7 +49,44 @@ end
 
 function Config.default()
     local data = {
+        -- Global volume.
+        volume = 100,
+
+        -- Individual sound event config.
+        events = {},
     }
+
+    data.events.osay = {
+        desc = "OOC say in your room",
+        defaultWav = "osay.wav",
+        volume = 100,
+        panning = 0,
+    }
+    data.events.otell = {
+        desc = "Send/receive OOC tells",
+        defaultWav = "otell.wav",
+        volume = 100,
+        panning = 0,
+    }
+    data.events.say = {
+        desc = "Say and sayto in your room",
+        defaultWav = "say.wav",
+        volume = 100,
+        panning = 0,
+    }
+    data.events.tell = {
+        desc = "Send/receive tells",
+        defaultWav = "tell.wav",
+        volume = 100,
+        panning = 0,
+    }
+    data.events.yell = {
+        desc = "Yells in your area",
+        defaultWav = "yell.wav",
+        volume = 100,
+        panning = 0,
+    }
+
     return serialize.save_simple(data)
 end
 
@@ -92,6 +129,7 @@ Utility = {}
 
 function Utility.initialize()
     local initializers = {
+        Config.initialize,
     }
     for _, initializer in ipairs(initializers) do
         initializer()
