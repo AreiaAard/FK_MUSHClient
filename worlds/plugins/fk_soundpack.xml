@@ -86,6 +86,9 @@ end
 
 
 function OnPluginBroadcast(msg, id, name, text)
+    if (id ~= const.PLUGIN.EVENT_HANDLER) then
+        return
+    end
 end
 ]]>
 </script>
