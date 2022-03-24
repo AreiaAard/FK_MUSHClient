@@ -33,4 +33,10 @@ const.EVENT_TYPE = {
 }
 
 
+-- FK-specific plugin ids indexed by name, excluding the 'FK_'.
+const.PLUGIN = {
+    EVENT_HANDLER = "35365d0a213358e5f89e11cd",
+}
+
+
 return const
