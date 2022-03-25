@@ -112,6 +112,38 @@ function Config.set(key, val)
     Config.data[key] = val
     Config.save()
 end
+
+
+function Config.get_event(event)
+    return Config.get("events")[event]
+end
+
+
+function Config.set_event(event, key, val)
+    local eventData = assert(
+        Config.get_event(event),
+        string.format("Invalid event name: %s.", event)
+    )
+    local validKeys = {
+        customWav = "string",
+        volume = "number",
+        panning = "number",
+    }
+    assert(
+        validKeys[key],
+        string.format("Invalid setting %s for sound event.", key)
+    )
+    assert(
+        type(val) == validKeys[key],
+        string.format(
+            "Sound event setting %s must have a value of type %s.",
+            key, validKeys[key]
+        )
+    )
+
+    eventData[key] = val
+    Config.save()
+end
 ]]>
 </script>
 
