@@ -55,6 +55,7 @@ require("tprint")
 require("var")
 require("wait")
 local const = require("fk_const")
+require("fk_note")
 
 
 --------------------------------------------------
@@ -174,7 +175,8 @@ function Config.volume(alias, line, wc)
     -- Max volume of 100.
     volume = math.min(volume, 100)
     Config.set("volume", volume)
-    print("Soundpack volume set to", volume)
+    local msg = "Global volume set to %d."
+    Utility.msg_major(msg:format(volume))
 end
 ]]>
 </script>
@@ -202,6 +204,12 @@ end
 
 
 function Utility.deinitialize()
+end
+
+
+function Utility.msg_major(str)
+    local msg = "[{B0}Soundpack{70}]: " .. str
+    fk_note(msg)
 end
 ]]>
 </script>
