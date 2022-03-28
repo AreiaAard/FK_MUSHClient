@@ -297,6 +297,12 @@ function OnPluginBroadcast(msg, id, name, text)
     if (id ~= const.PLUGIN.EVENT_HANDLER) then
         return
     end
+
+    local eventPath = utils.split(text, ".")
+    if (msg == const.EVENT_TYPE.COMMUNICATION) then
+        Soundpack.event(eventPath[2])
+        return
+    end
 end
 ]]>
 </script>
