@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE muclient>
+<!DOCTYPE muclient [
+    <!ENTITY cmdPrefix "fksp">
+]>
 
 <muclient>
 <plugin
@@ -22,6 +24,27 @@
 
 <include name="constants.lua"/>
 
+
+<aliases>
+    <alias
+     match="^ *&cmdPrefix; +config +vol *$"
+     enabled="y"
+     script="Config.volume"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
+     match="^ *&cmdPrefix; +config +vol +(?<volume>\d+) *$"
+     enabled="y"
+     script="Config.volume"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+</aliases>
 
 
 <script>
@@ -143,6 +166,15 @@ function Config.set_event(event, key, val)
 
     eventData[key] = val
     Config.save()
+end
+
+
+function Config.volume(alias, line, wc)
+    local volume = tonumber(wc.volume) or Config.get("volume")
+    -- Max volume of 100.
+    volume = math.min(volume, 100)
+    Config.set("volume", volume)
+    print("Soundpack volume set to", volume)
 end
 ]]>
 </script>
