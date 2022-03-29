@@ -273,7 +273,7 @@ end
     </trigger>
 
     <trigger
-     match="^(?<offender>.+) is DE(?:AD|stroyed)!$"
+     match="^(?<offender>.+) is DE(?:AD|STROYED)!$"
      enabled="y"
      script="Combat.death"
      regexp="y"
