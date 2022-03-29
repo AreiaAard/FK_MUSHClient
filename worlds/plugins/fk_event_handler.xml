@@ -271,6 +271,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^(?<offender>.+) is DE(?:AD|stroyed)!$"
+     enabled="y"
+     script="Combat.death"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -296,6 +305,16 @@ function Combat.engage(trigger, line, wc)
         offender = wc.offender,
         defender = wc.defender,
         surprise = wc.method:match("^surprise") and true or false,
+        line = line,
+    }
+end
+
+
+function Combat.death(trigger, line, wc)
+    Combat.event{
+        action = "death",
+        offender = "",
+        defender = wc.defender,
         line = line,
     }
 end

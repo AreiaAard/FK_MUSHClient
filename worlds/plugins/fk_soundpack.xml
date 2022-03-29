@@ -116,6 +116,12 @@ function Config.default()
         volume = 100,
         panning = 0,
     }
+    data.events.death = {
+        desc = "Other mob and PC deaths",
+        defaultWav = "death_other.wav",
+        volume = 100,
+        panning = 0,
+    }
 
     return serialize.save_simple(data)
 end
