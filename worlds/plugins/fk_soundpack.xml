@@ -309,6 +309,11 @@ function OnPluginBroadcast(msg, id, name, text)
         Soundpack.event(eventPath[2])
         return
     end
+
+    if (msg == const.EVENT_TYPE.COMBAT) then
+        Soundpack.event(eventPath[2])
+        return
+    end
 end
 ]]>
 </script>

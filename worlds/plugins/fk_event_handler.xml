@@ -264,7 +264,7 @@ end
 
 <triggers>
     <trigger
-     match="^(?<offender>.+) (?<method>approach(?:es)|surprises?) (?<defender>.+) and prepares? to engage (?:you|him|her|it) in combat!$"
+     match="^(?<offender>.+) (?<method>approach(?:es)?|surprises?) (?<defender>.+) and prepares? to engage (?:you|him|her|it) in combat!$"
      enabled="y"
      script="Combat.engage"
      regexp="y"
