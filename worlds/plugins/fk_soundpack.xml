@@ -110,6 +110,12 @@ function Config.default()
         volume = 100,
         panning = 0,
     }
+    data.events.engage = {
+        desc = "Combat engagements",
+        defaultWav = "engage.wav",
+        volume = 100,
+        panning = 0,
+    }
 
     return serialize.save_simple(data)
 end

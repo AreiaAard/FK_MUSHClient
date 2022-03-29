@@ -261,4 +261,46 @@ end
 </script>
 
 
+
+<triggers>
+    <trigger
+     match="^(?<offender>.+) (?<method>approach(?:es)|surprises?) (?<defender>.+) and prepares? to engage (?:you|him|her|it) in combat!$"
+     enabled="y"
+     script="Combat.engage"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Combat
+--------------------------------------------------
+
+
+Combat = {}
+
+
+function Combat.event(data)
+    local path = "combat." .. data.action
+    EventHandler.event(const.EVENT_TYPE.COMBAT, path, data)
+end
+
+
+function Combat.engage(trigger, line, wc)
+    Combat.event{
+        action = "engage",
+        offender = wc.offender,
+        defender = wc.defender,
+        surprise = wc.method:match("^surprise") and true or false,
+        line = line,
+    }
+end
+]]>
+</script>
+
+
 </muclient>
