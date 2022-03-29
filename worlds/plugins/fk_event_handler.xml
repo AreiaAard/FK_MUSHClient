@@ -135,6 +135,14 @@ end
      sequence="100"
     >
     </trigger>
+    <trigger
+     match="^(?<speaker>.+) repl(?:y|ies) to (?<receiver>.+),? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.tell"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 
     <trigger
      match="^(?<speaker>.+) yells?,? '(?<message>.+)'$"
@@ -155,6 +163,14 @@ end
     </trigger>
     <trigger
      match="^(?<speaker>.+) tells? (?<receiver>.+), OOC '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.otell"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     match="^(?<speaker>.+) repl(?:y|ies) to (?<receiver>.+), OOC '(?<message>.+)'$"
      enabled="y"
      script="Communication.otell"
      regexp="y"
