@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- Saved on Wednesday, March 23, 2022, 6:09 PM -->
+<!-- Saved on Tuesday, March 29, 2022, 1:03 PM -->
 <!-- MuClient version 5.06 -->
 <!-- Written by Nick Gammon -->
 <!-- Home Page: http://www.mushclient.com/ -->
@@ -8,7 +8,7 @@
 <world
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
 
    auto_say_override_prefix="-"
    auto_say_string="say "
@@ -42,7 +42,6 @@
    default_trigger_sequence="100"
    default_alias_sequence="100"
    detect_pueblo="y"
-   display_my_input="y"
    echo_hyperlink_in_output_window="y"
    edit_script_with_notepad="y"
    enable_aliases="y"
@@ -114,7 +113,7 @@
 <triggers
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 </triggers>
 
@@ -123,7 +122,7 @@
 <aliases
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 </aliases>
 
@@ -132,7 +131,7 @@
 <timers
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 </timers>
 
@@ -141,7 +140,7 @@
 <macros
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 
   <macro name="up" type="send_now" >
@@ -235,7 +234,7 @@
 <variables
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 </variables>
 
@@ -244,7 +243,7 @@
 <colours
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 
 <ansi>
@@ -301,7 +300,7 @@
 <keypad
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 
   <key name="0" >
@@ -415,7 +414,7 @@
 <printing
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-03-23 18:09:06"
+   date_saved="2022-03-29 13:03:29"
   >
 
 <ansi>
