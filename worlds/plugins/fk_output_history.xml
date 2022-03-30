@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+    name="FK_Output_History"
+    author="Areia"
+    id="3d0ba65da96f278b1d729f9c"
+    language="Lua"
+    purpose="Save output to a notepad window"
+    save_state="n"
+    date_written="2022-03-30 12:00:00"
+    requires="5.06"
+    version="0.00"
+>
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+
+<script>
+<![CDATA[
+require("commas")
+require("serialize")
+require("tprint")
+require("var")
+require("wait")
+local const = require("fk_const")
+
+
+--------------------------------------------------
+-- Core
+--------------------------------------------------
+
+
+Core = {}
+
+
+]]>
+</script>
+
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Utility
+--------------------------------------------------
+
+
+Utility = {}
+
+
+function Utility.initialize()
+    local initializers = {
+    }
+    for _, initializer in ipairs(initializers) do
+        initializer()
+    end
+end
+
+
+function Utility.deinitialize()
+end
+]]>
+</script>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
+
+
+function OnPluginInstall()
+    Utility.initialize()
+end
+
+
+function OnPluginEnable()
+    OnPluginInstall()
+end
+
+
+function OnPluginClose()
+    Utility.deinitialize()
+end
+
+
+function OnPluginDisable()
+    OnPluginClose()
+end
+
+
+function OnPluginScreendraw(type, log, line)
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+end
+]]>
+</script>
+
+
+</muclient>
