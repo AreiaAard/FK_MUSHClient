@@ -35,13 +35,75 @@ local const = require("fk_const")
 
 
 --------------------------------------------------
--- Core
+-- Log
 --------------------------------------------------
 
 
-Core = {}
+Log = {}
+Log.TITLE = "Output"
+Log.MAX_SIZE = 838860 -- in bytes.
+Log.SAVE_METHOD = 2 -- Do not ask to save.
 
 
+function Log.exists()
+    for _, title in ipairs(GetNotepadList() or {}) do
+        if (title == Log.TITLE) then
+            return true
+        end
+    end
+    return false
+end
+
+
+function Log.initialize()
+    if (Log.exists()) then
+        return -- Already done.
+    end
+    SendToNotepad(Log.TITLE, "Capturing all output.\r\n\r\n")
+    Log.make_read_only()
+    Log.make_no_save()
+end
+
+
+function Log.append(str)
+    Log.initialize()
+    if (not str or str == "") then
+        return
+    end
+
+    if (Log.get_size() > Log.MAX_SIZE) then
+        local oldContents = Log.get_contents()
+        Log.replace(oldContents:sub(Log.MAX_SIZE / 2))
+    end
+
+    str = str .. "\r\n"
+    return AppendToNotepad(Log.TITLE, str)
+end
+
+
+function Log.replace(str)
+    return ReplaceNotepad(Log.TITLE, str)
+end
+
+
+function Log.make_read_only(readOnly)
+    return NotepadReadOnly(Log.TITLE, readOnly)
+end
+
+
+function Log.make_no_save()
+    return NotepadSaveMethod(Log.TITLE, Log.SAVE_METHOD)
+end
+
+
+function Log.get_contents()
+    return GetNotepadText(Log.TITLE)
+end
+
+
+function Log.get_size()
+    return GetNotepadLength(Log.TITLE)
+end
 ]]>
 </script>
 
@@ -59,6 +121,7 @@ Utility = {}
 
 function Utility.initialize()
     local initializers = {
+        Log.initialize,
     }
     for _, initializer in ipairs(initializers) do
         initializer()
@@ -100,6 +163,11 @@ end
 
 
 function OnPluginScreendraw(type, log, line)
+    if (not line or line == "" or type > 1) then
+        -- Do not bother with empty lines or user commands.
+        return
+    end
+    Log.append(line)
 end
 
 
