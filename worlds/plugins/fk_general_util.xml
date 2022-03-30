@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+    name="FK_General_Util"
+    author="Areia"
+    id="3d8e9058038521b5501a2bac"
+    language="Lua"
+    purpose="General useful aliases and macros"
+    save_state="n"
+    date_written="2022-03-30 14:00:00"
+    requires="5.06"
+    version="0.00"
+>
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+
+<aliases>
+    <alias
+     match="^p (.*)$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        put %1
+     </send>
+    </alias>
+</aliases>
+
+
+<script>
+<![CDATA[
+require("commas")
+require("serialize")
+require("tprint")
+require("var")
+require("wait")
+local const = require("fk_const")
+
+
+--------------------------------------------------
+-- Core
+--------------------------------------------------
+
+
+Core = {}
+
+
+]]>
+</script>
+
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Utility
+--------------------------------------------------
+
+
+Utility = {}
+
+
+function Utility.initialize()
+    local initializers = {
+    }
+    for _, initializer in ipairs(initializers) do
+        initializer()
+    end
+end
+
+
+function Utility.deinitialize()
+end
+]]>
+</script>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
+
+
+function OnPluginInstall()
+    Utility.initialize()
+end
+
+
+function OnPluginEnable()
+    OnPluginInstall()
+end
+
+
+function OnPluginClose()
+    Utility.deinitialize()
+end
+
+
+function OnPluginDisable()
+    OnPluginClose()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+end
+]]>
+</script>
+
+
+</muclient>
