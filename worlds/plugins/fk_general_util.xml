@@ -26,6 +26,115 @@
 
 <aliases>
     <alias
+     match="^cc +(.+)$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        cook '%1 corpse'
+     </send>
+    </alias>
+
+    <alias
+     match="^cm(.*)$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        combatmode%1
+     </send>
+    </alias>
+
+    <alias
+     match="^gac(\d*)$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        local index = tonumber("%1") or 1
+        local cmd = "get all.coins %d.corpse"
+        Send(cmd:format(index))
+     </send>
+    </alias>
+
+    <alias
+     match="^gc(\d*) +(.+)$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        local target = trim("%2")
+        local index = tonumber("%1") or 1
+        local cmd = "get %s %d.corpse"
+        Send(cmd:format(target, index))
+     </send>
+    </alias>
+
+    <alias
+     match="^gls$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        glance self
+     </send>
+    </alias>
+
+    <alias
+     match="^li (.*)$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        look in %1
+     </send>
+    </alias>
+
+    <alias
+     match="^lu (.*)$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        look under %1
+     </send>
+    </alias>
+
+    <alias
+     match="^no$"
+     enabled="y"
+     send_to="0"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        nod
+     </send>
+    </alias>
+
+    <alias
      match="^p (.*)$"
      enabled="y"
      send_to="0"
@@ -37,7 +146,54 @@
         put %1
      </send>
     </alias>
+
+    <alias
+     match="^sc(?:an?)?$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        local dirs = {
+            "north", "northeast", "east", "southeast", "south",
+            "southwest", "west", "northwest", "up", "down"
+        }
+        local arg = table.concat(dirs, " ")
+        Execute("scan " .. arg)
+     </send>
+    </alias>
+    <alias
+     match="^sc(?:an?)? +(.+)$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        local targets = trim("%1")
+        targets = targets:gsub("%s+", " ")
+        targets = utils.split(targets, " ")
+        for _, target in ipairs(targets) do
+            Send("look " .. target)
+        end
+     </send>
+    </alias>
 </aliases>
+
+
+<triggers>
+    <trigger
+     match="^Ok\.$"
+     enabled="y"
+     regexp="y"
+     omit_from_output="y"
+     sequence="100"
+    >
+    </trigger>
+</triggers>
 
 
 <script>
@@ -58,6 +214,12 @@ local const = require("fk_const")
 Core = {}
 
 
+function Core.initialize()
+    AcceleratorTo("ALT+G", "group", sendto.world)
+    AcceleratorTo("ALT+L", "scan", sendto.execute)
+    AcceleratorTo("ALT+P", "config +prompt;config -prompt", sendto.execute)
+    AcceleratorTo("ALT+T", "time", sendto.world)
+end
 ]]>
 </script>
 
@@ -75,6 +237,7 @@ Utility = {}
 
 function Utility.initialize()
     local initializers = {
+        Core.initialize,
     }
     for _, initializer in ipairs(initializers) do
         initializer()
