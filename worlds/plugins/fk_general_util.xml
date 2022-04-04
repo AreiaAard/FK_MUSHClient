@@ -28,26 +28,26 @@
     <alias
      match="^cc +(.+)$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        cook '%1 corpse'
+        Send("cook %1 corpse")
      </send>
     </alias>
 
     <alias
      match="^cm(.*)$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        combatmode%1
+        Send("combatmode%1")
      </send>
     </alias>
 
@@ -85,65 +85,80 @@
     <alias
      match="^gls$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        glance self
+        Send("glance self")
+     </send>
+    </alias>
+
+    <alias
+     match="^lc(\d+)?$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        local index = tonumber("%1") or 1
+        local cmd = "look in %d.corpse"
+        Send(cmd:format(index))
      </send>
     </alias>
 
     <alias
      match="^li (.*)$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        look in %1
+        Send("look in %1")
      </send>
     </alias>
 
     <alias
      match="^lu (.*)$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        look under %1
+        Send("look under %1")
      </send>
     </alias>
 
     <alias
      match="^no$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        nod
+        Send("nod")
      </send>
     </alias>
 
     <alias
      match="^p (.*)$"
      enabled="y"
-     send_to="0"
+     send_to="12"
      regexp="y"
      ignore_case="y"
      sequence="100"
     >
      <send>
-        put %1
+        Send("put %1")
      </send>
     </alias>
 
@@ -199,7 +214,6 @@
 <script>
 <![CDATA[
 require("commas")
-require("serialize")
 require("tprint")
 require("var")
 require("wait")
@@ -219,6 +233,7 @@ function Core.initialize()
     AcceleratorTo("ALT+L", "scan", sendto.execute)
     AcceleratorTo("ALT+P", "config +prompt;config -prompt", sendto.execute)
     AcceleratorTo("ALT+T", "time", sendto.world)
+    AcceleratorTo("ALT+W", "who", sendto.world)
 end
 ]]>
 </script>
