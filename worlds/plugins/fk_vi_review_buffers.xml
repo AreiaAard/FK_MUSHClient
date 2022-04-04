@@ -1,0 +1,935 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<!--
+   Thanks to the original authors of the code for the history buffers Tyler Spivey, Oriol Gomez, and Wyoun!
+-->
+
+<muclient>
+<plugin
+ name="FK_VI_Review_Buffers"
+ author="Pwar and Areia"
+ id="6000a4c6f0e71d31fecf523d"
+ language="Lua"
+ purpose="Allow for easy review of various messages/events sorted into categories with hotkeys"
+ date_written="2017-12-17 13:00:25"
+ requires="4.51"
+ version="1.0"
+ save_state="y"
+>
+<description trim="y">
+<![CDATA[
+
+Shortcut keys:
+
+Alt + Right and Alt + Left - selects next and previous category
+
+Shift + Alt + Right and Left - moves category in direction
+
+Ctrl + 1 through Ctrl + 0 - reviews last 10 messages
+   double pressing the number will copy to clipboard
+
+Alt + 1 through Alt + 0 - reviews message 1 through 10
+   double pressing the number will copy to clipboard
+
+Alt + UpArrow and Downarrow to go up 1 message or down 1
+
+Alt + PageUp and PageDown to go up 10 messages or down 10
+
+Alt + U  - copies url in currently selected message, double tapping
+         will open the url in the current message
+
+Alt + Delete - will delete a category
+
+Ctrl + Tab - This will switch you to the global notepad window
+             which captures all output from the mud for you to review
+
+
+Commands:
+
+rev or review [any command]
+           - This will put the output from any command you send into your Review category
+
+vi add    - allows you to add lines/categories yourself
+             vi add All=Text line to add
+
+Settings:
+
+vi int    - this toggles between using TTS interrupts and regular messages
+             when reviewing, category changes will still be TTS messages
+
+Custom categories:
+You can easily add lines to existing categories, or make your own.
+
+Simply make a trigger "Send To" Execute
+   vi add All=Text line to add
+
+This example would add the line "Text line to add" to the existing All
+category. You could also create your own category.
+
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   script="review_delete"
+   match="^review_delete"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   regexp="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_category_move"
+   match="^review_category_move (\w+)"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   regexp="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_url"
+   match="^review_url$"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   regexp="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_add"
+   match="^vi add (\w+)=(.*)"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   keep_evaluating="n"
+   regexp="y"
+   omit_from_output="y"
+   sequence="99"
+  >
+  </alias>
+
+  <alias
+   script="review_add"
+   match="^vi add.?"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   keep_evaluating="n"
+   regexp="y"
+   omit_from_output="y"
+   sequence="99"
+  >
+  </alias>
+
+  <alias
+   script="vi"
+   match="^vi (.+)"
+   enabled="y"
+   keep_evaluating="y"
+   regexp="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_get"
+   match="^review_get (\d+)$"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   regexp="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   match="buffer_get_line *"
+   enabled="y"
+   script="buffer_get_line"
+   omit_from_output="y"
+   omit_from_log="y"
+   omit_from_command_history="y"
+   send_to="12"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_catprev"
+   match="review_catprev"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_catnext"
+   match="review_catnext"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_msgprev"
+   match="^review_msgprev (\d+)$"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   omit_from_output="y"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_msgnext"
+   match="^review_msgnext (\d+)$"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   omit_from_output="y"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   script="review_msgcopy"
+   match="review_msgcopy"
+   enabled="y"
+   omit_from_command_history="y"
+   omit_from_log="y"
+   omit_from_output="y"
+   sequence="100"
+  >
+  </alias>
+</aliases>
+
+<triggers>
+</triggers>
+
+<script>
+<![CDATA[
+require "json"
+
+local const = require("fk_const")
+require("fk_event")
+
+
+local internal_ver = "1.1.0"
+local modes = {} -- for keyboard states
+local messages = {}
+local indices = {}
+local max_buffer_size = 838860
+local initialized = false
+local currentIndex = 1
+local globalbuffer = {}
+local notepadbuffer = {}
+local lastState
+local current_category = 0 -- not set yet
+local current_msg_id = 0
+local listIndexing = true
+
+
+-- set up accelerators
+for i = 1, 9 do
+   Accelerator("alt + " .. i, "review_get " .. i) -- current category message buffers
+   --Accelerator("ctrl + " .. i, "buffer_get_line " .. i) -- These are global message buffers
+end
+Accelerator("alt + 0", "review_get 10") -- 10 is a special case
+--Accelerator("ctrl + 0", "buffer_get_line 10")
+Accelerator("alt + right", "review_catnext")
+Accelerator("alt + left", "review_catprev")
+Accelerator("alt + down", "review_msgnext 1")
+Accelerator("alt + up", "review_msgprev 1")
+Accelerator("alt + pagedown", "review_msgnext 10")
+Accelerator("alt + pageup", "review_msgprev 10")
+Accelerator("alt + end", "review_msgnext 200")
+Accelerator("alt + home", "review_msgprev 200")
+--Accelerator("shift+alt + right", "review_category_move right")
+--Accelerator("shift+alt + left", "review_category_move left")
+Accelerator("alt+delete","review_delete")
+Accelerator("alt + space", "review_msgprev 0")
+Accelerator("alt+shift+space","review_msgcopy")
+Accelerator("alt + u", "review_url")
+
+
+function review_addline(catname, line)
+   review_add(nil, nil, {catname, line})
+end
+
+function OnPluginGetFocus()
+   if(#notepadbuffer>0) then
+      if not initialized then
+         return
+      end
+      for i, buffered in ipairs(notepadbuffer) do
+         appendQueue(buffered)
+      end
+      notepadbuffer = {}
+   end
+end
+
+local appendBuffer = ""
+local lastAppend
+function appendQueue(line)
+   if GetNotepadLength("output") > max_buffer_size then
+      local oldbuffer = GetNotepadText("output")
+      ReplaceNotepad("output", string.sub(oldbuffer, max_buffer_size / 2))
+   end
+
+   appendBuffer = appendBuffer .. line .. "\r\n"
+
+   if not initialized then
+      return
+   end
+
+   if appendBuffer ~= nil and ((lastAppend == nil) or (lastAppend < os.time())) then
+      AppendToNotepad("output", appendBuffer)
+      appendBuffer = ""
+      lastAppend = os.time()
+   end
+   if appendBuffer ~= "" then
+      DoAfterSpecial(1, "emptyQueue()", 12)
+   end
+
+end
+
+function emptyQueue()
+   if GetNotepadLength("output") > max_buffer_size then
+      local oldbuffer = GetNotepadText("output")
+      ReplaceNotepad("output", string.sub(oldbuffer, max_buffer_size / 2))
+   end
+   if appendBuffer ~= "" then
+      AppendToNotepad("output", appendBuffer)
+      appendBuffer = ""
+      lastAppend = os.time()
+   end
+end
+
+function OnPluginScreendraw(t,l,line)
+   if line == nil or line == "" or t > 1 then
+      return
+   end
+
+   table.insert(globalbuffer, 1, line)
+   globalbuffer[11] = nil
+
+   if(GetInfo(113) == false) then
+      table.insert(notepadbuffer, line)
+   else
+      appendQueue(line)
+   end
+end
+
+function buffer_get_line(name, line, wc)
+   wc = tonumber(wc[1])
+   line = globalbuffer[wc]
+
+   local timeout = 0.4 -- in seconds
+   if modes[wc] == nil then
+      modes[wc] = {os.clock(), 1}
+   elseif os.clock()-modes[wc][1] >= timeout then
+      modes[wc][1] = os.clock()
+      modes[wc][2] = 1
+   else
+      modes[wc][1] = os.clock()
+      modes[wc][2] = modes[wc][2] + 1
+   end
+   if modes[wc][2] > 2 then
+      modes[wc][2] = 2
+   end
+   if modes[wc][2] == 2 then
+      SetClipboard(line)
+      Execute(";tts_interrupt copied.")
+   end
+   if modes[wc][2] == 1 then
+      Execute(";tts_interrupt "..line)
+   end
+end
+
+function review_clear_cat(cat)
+   if cat ~= nil and #cat ~= 0 then
+      for i = 1, #categories do
+         if cat == categories[i] then
+            logmsg("Cleared category: " .. categories[i])
+            messages[categories[i]] = nil
+            indices[categories[i]] = nil
+         end
+      end
+   end
+end
+
+function message_select(msg_index)
+   current_msg_id = tonumber(msg_index)
+   local t = {
+      catname = categories[current_category],
+      msg = messages[categories[current_category]][msg_index],
+      index = msg_index
+   }
+   logmsg("Message index " .. msg_index .. " selected. Category is \"" .. categories[current_category] .. "\".")
+   BroadcastPlugin(101, json.encode(t)) -- broadcast we have selected a new message in a category
+end
+
+function review_delete(n,l,w)
+   if #categories == 0 then
+      speak("no categories")
+      return
+   end
+   if current_category == 0 then
+      speak("No category selected.")
+      return
+   end
+   messages[categories[current_category]] = nil
+   indices[categories[current_category]] = nil
+   table.remove(categories, current_category)
+   if current_category > #categories then
+      current_category = 1
+   end
+   if #categories > 0 then
+      speak(categories[current_category])
+   else
+      speak("no more categories.")
+   end
+end
+
+function review_category_move(name, line, w)
+   if #categories == 0 then
+      speak("no categories")
+      return
+   end
+   if current_category == 0 then
+      speak("No category selected.")
+      return
+   end
+   name = categories[current_category]
+   table.remove(categories,current_category)
+   if w[1]=="right" then
+      current_category = current_category + 1
+   if current_category > #categories + 1 then
+      current_category = 2
+   end
+   else
+      current_category = current_category - 1
+      if current_category < 1 then
+         current_category = #categories
+      end
+   end
+   table.insert(categories, current_category, name)
+   speak(name.." moved "..w[1])
+   SaveState()
+end
+
+local function has_value(table, val)
+   for i = 1, #table do
+      if table[i] == val then
+         return true
+      end
+   end
+   return false
+end
+
+function review_add(name, line, wc)
+   local cat, msg = wc[1], wc[2]
+
+   if wc[1] == nil or wc[2] == nil then
+      printmsg("Usage is\nvi add All=Text line to add")
+      return
+   end
+   if messages[cat] == nil then
+      if has_value(categories, cat) then
+         -- Already have category, clearing messages and indices
+         messages[cat] = {}
+         indices[cat] = 0
+      else
+         messages[cat] = {}
+         indices[cat] = 0
+         table.insert(categories, cat)
+         SaveState()
+      end
+   end
+
+   if msg ~= "" then
+      table.insert(messages[cat], msg)
+      local t = {cat, msg}
+      BroadcastPlugin(100, json.encode(t)) -- broadcast we have a new message added to a buffer
+      logmsg("addBuffer[" .. cat .. "] - " .. msg)
+   end
+   -- if we go over 100 items, remove the oldest one
+   if #messages[cat] > 100 then
+      table.remove(messages[cat], 1)
+      if indices[cat] > 1 then
+         indices[cat] = indices[cat] - 1
+      end
+   end
+end
+
+
+-- helper function to say stuff
+function speak(msg, mode)
+   if GetVariable("tts_interrupt") ~= "1" and mode ~= "tts" then
+      mode = "note"
+   else
+      mode = "tts"
+   end
+
+   --if mode == nil then mode = "tts" end
+   if mode == "tts" then
+      Execute(";tts_interrupt " .. msg)
+   else
+      Note(msg)
+   end
+end
+
+function review_url(name, line, wc)
+   local timeout = 0.5 -- in seconds
+   local item = current_msg_id
+
+   if current_category == nil or current_msg_id == nil or messages[categories[current_category]] == nil then
+      speak("no message selected")
+      return
+   end
+   local msgstr = messages[categories[current_category]][current_msg_id]
+
+   if msgstr == nil then
+      speak("no message selected")
+      return
+   end
+
+   local url = url_from_string(messages[categories[current_category]][current_msg_id])
+   if url == nil then
+      speak("no url found")
+      return
+   end
+
+   if modes[item] == nil then
+      modes[item] = {os.clock(), 1}
+   elseif os.clock()-modes[item][1] >= timeout then
+      modes[item][1] = os.clock()
+      modes[item][2] = 1
+   else
+      modes[item][1] = os.clock()
+      modes[item][2] = modes[item][2] + 1
+   end
+
+   if modes[item][2] > 2 then
+      modes[item][2] = 2
+   end
+
+   if modes[item][2] == 1 then
+      SetClipboard(url)
+      speak("copied url")
+   elseif modes[item][2] == 2 then
+      OpenBrowser(url)
+      speak("opening url")
+   end
+end
+
+function url_from_string(str)
+   local pattern = "https?://[%w-_%.%?%.:/%+=&]+"
+   local start, stop = (string.find(str, pattern))
+
+   if start == nil then
+      return
+   end
+
+   local url = string.sub(str, start, stop)
+   url = string.gsub(url, "'", "") -- strip apostrophes out from some comm channels (these aren't used in urls in general)
+   stop = url:find(' ')
+   if stop ~= nil then
+      url = string.sub(url, 1, stop - 1)
+   end
+   return url
+end
+
+function review_get(name, line, wc)
+   local str = ""
+   if current_category == 0 and #categories == 0 then
+      speak("No categories")
+      return
+   elseif current_category == 0 and #categories > 0 then
+      for i, result in ipairs(categories) do
+         if categories[i] == "All" then
+            current_category = i
+         end
+      end
+      if current_category > 0 then
+         str = str .. "switching to all."
+      else
+         str = str .. "switching to " .. categories[1] .. ". Use alt left and right arrows to change."
+         current_category = 1
+      end
+   end
+
+   if messages[categories[current_category]] == nil then
+      speak("No messages.")
+      return
+   end
+
+   local item = tonumber(wc[1])
+      if #messages[categories[current_category]] < item then
+      speak("no message")
+      return
+   end
+
+   -- now that all that's out of the way, we can start our real code which should always succeed.
+   local timeout = 0.5 -- in seconds
+   if modes[item] == nil then
+      modes[item] = {os.clock(), 1}
+   elseif os.clock()-modes[item][1] >= timeout then
+      modes[item][1] = os.clock()
+      modes[item][2] = 1
+   else
+      modes[item][1] = os.clock()
+      modes[item][2] = modes[item][2] + 1
+   end
+
+   if modes[item][2] > 2 then
+      modes[item][2] = 2
+   end
+
+   local real_item = #messages[categories[current_category]] + 1 - item
+   if modes[item][2] == 1 then
+      speak(str .. " " .. messages[categories[current_category]][real_item])
+   elseif modes[item][2] == 2 then
+      SetClipboard(messages[categories[current_category]][real_item])
+      speak("copied")
+   end
+
+   message_select(real_item)
+end
+
+function review_catnext(name, line, wc)
+   current_msg_id = 0;
+   local mode = nil
+   if #categories == 0 then
+      speak("no categories", "tts")
+      return
+   end
+   current_category = current_category + 1
+
+   if current_category > #categories then
+      current_category = 1
+   end
+
+   if ((messages[categories[current_category]] == nil) or (#messages[categories[current_category]] == 0)) and categories[current_category] ~= "All" then
+      repeat
+         logmsg("Skipping empty category: " .. categories[current_category])
+         current_category = current_category + 1
+         if current_category > #categories then
+            current_category = 1
+         end
+         if messages[categories[current_category]] == nil then
+            return
+         end
+         -- skip empty categories until one with messages is reached, or All category is encountered
+      until (categories[current_category] == "All") or (#messages[categories[current_category]] ~= 0)
+   end
+   speak(categories[current_category], "tts")
+   if messages[categories[current_category]] ~= nil then
+      message_select(#messages[categories[current_category]])
+   end
+end
+
+function review_catprev(name, line, wc)
+   current_msg_id = 0;
+   local mode = nil
+   if #categories == 0 then
+      speak("no categories", "tts")
+      return
+   end
+   current_category = current_category - 1
+
+   if current_category < 1 then
+      current_category = #categories
+   end
+   if ((messages[categories[current_category]] == nil) or (#messages[categories[current_category]] == 0)) and categories[current_category] ~= "All" then
+      repeat
+         logmsg("Skipping empty category: " .. categories[current_category])
+         current_category = current_category - 1
+         if current_category < 1 then
+            current_category = #categories
+         end
+         if messages[categories[current_category]] == nil then
+            return
+         end
+         -- skip empty categories until one with messages is reached, or All category is encountered
+      until (#messages[categories[current_category]] ~= 0) or (categories[current_category] == "All")
+   end
+   speak(categories[current_category], "tts")
+   if messages[categories[current_category]] ~= nil then
+      message_select(#messages[categories[current_category]])
+   end
+end
+
+function review_msgnext(name, line, wc)
+   local skip = tonumber(wc[1])
+   local str = ""
+   if messages[categories[current_category]] == nil then
+      return
+   end
+   if #messages[categories[current_category]] == 0 or indices[categories[current_category]] == nil then
+      speak("No messages.")
+      return
+   end
+   if #categories == 0 then
+      speak("no categories")
+      return
+   end
+   if current_category == 0 then
+      speak("No category selected.")
+      return
+   end
+   if indices[categories[current_category]] == 0 then
+      indices[categories[current_category]] = #messages[categories[current_category]]
+   end
+   if indices[categories[current_category]] + skip > #messages[categories[current_category]] then
+      indices[categories[current_category]] = #messages[categories[current_category]]
+      str = str .. "Bottom: "
+   else
+      indices[categories[current_category]] = indices[categories[current_category]] + skip
+   end
+
+   local msg = messages[categories[current_category]][indices[categories[current_category]]]
+   if msg ~= nil then
+      speak(str .. msg)
+   else
+      speak("No messages.")
+   end
+   local real_item = indices[categories[current_category]]
+   message_select(real_item)
+end
+
+function review_msgprev(name, line, wc)
+   local skip = tonumber(wc[1])
+   local str = ""
+   if messages[categories[current_category]] == nil then
+      return
+   end
+   if #messages[categories[current_category]] == 0 or indices[categories[current_category]] == nil then
+      speak("No messages.")
+      return
+   end
+   if #categories == 0 then
+      speak("No categories")
+      return
+   end
+   if current_category == 0 then
+      speak("No category selected.")
+      return
+   end
+   if indices[categories[current_category]] == 0 then
+      indices[categories[current_category]] = #messages[categories[current_category]]
+   end
+   if indices[categories[current_category]] - skip < 1 then
+      indices[categories[current_category]] = 1
+      str = str .. "Top: "
+   else
+      indices[categories[current_category]] = indices[categories[current_category]] - skip
+   end
+
+   local msg = messages[categories[current_category]][indices[categories[current_category]]]
+   if msg ~= nil then
+      speak(str .. msg)
+   else
+      speak("No messages.")
+   end
+   local real_item = indices[categories[current_category]]
+   message_select(real_item)
+end
+
+function review_msgcopy(name, line, wc)
+   if #categories == 0 then
+      speak("No categories")
+      return
+   end
+   if current_category == 0 then
+      speak("No category selected.")
+      return
+   end
+   if indices[categories[current_category]] == 0 then
+      indices[categories[current_category]] = #messages[categories[current_category]]
+   end
+   SetClipboard(messages[categories[current_category]][indices[categories[current_category]]])
+   speak("copied")
+end
+
+function vi_help(AliasName, AliasLine, wildcards)
+   print("")
+   NoteStyle(2)
+   print("FK VI Review Buffers Plugin v" .. internal_ver)
+   NoteStyle(0)
+   print("")
+   ColourNote("SteelBlue", "", GetPluginInfo (GetPluginID (), 3))
+   print("")
+   return
+end
+
+function OnPluginInstall()
+   print("")
+   Note("Loaded FK VI Review Buffers plugin, type \"vi help\" for shortcuts and commands")
+   print("")
+   if GetVariable("tts_interrupt") == nil then
+      SetVariable("tts_interupt", "1")
+   end
+   if not initialized then
+      initialized = true
+      -- Wait a second to prevent the plugin loading message from
+      -- being written to the notepad.
+      DoAfterSpecial(1, "init()", sendto.script)
+   end
+end
+
+
+function init()
+   logmsg("Initializing output notepad..")
+   AppendToNotepad("output", "Capturing all output\r\n")
+   NotepadSaveMethod("output", 2) -- this suppresses the save dialog when closing mush
+   -- this seems to automove cursor to last line every time the notepad changes rendering it useless for vi review :(
+   NotepadReadOnly("output", true) -- Make it read only so we don't overwrite the text accidentally
+end
+
+
+-- reverse ipairs function
+function ripairs(t)
+   local function ripairs_it (t,i)
+      i = i-1
+      local v = t[i]
+      if v == nil then
+         return v
+      end
+      return i, v
+   end
+   return ripairs_it, t, #t+1
+end
+
+function OnPluginBroadcast(msg, id, name, text)
+    if not initialized then
+        initialized = true
+        init()
+    end
+    if (id == const.PLUGIN.EVENT_HANDLER) then
+        local path = utils.split(text, ".")
+        if (msg == const.EVENT_TYPE.COMMUNICATION) then
+            local data = fk_event(text)
+            if (data.line) then
+                review_addline(path[2], data.line)
+            end
+        end
+    end
+end
+
+function category_select(index)
+   current_category = index
+   if messages[categories[current_category]] ~= nil then
+      message_select(#messages[categories[current_category]])
+   end
+end
+
+function clear_list(type)
+   currentList[type] = {}
+   review_clear_cat(string.upper(type))
+end
+
+function find_catid_by_name(cat)
+   for i = 1, #categories do
+      if categories[i] == cat then
+         return i
+      end
+   end
+end
+
+function get_current_selection()
+   local currCat = categories[current_category]
+   local listLen
+   if currentList[string.lower(currCat)] ~= nil then
+      listLen = #currentList[string.lower(currCat)]
+   end
+   return currCat, current_msg_id, listLen
+end
+
+function printmsg(msg)
+   ColourNote("steelblue", "", msg)
+end
+
+function logmsg(msg)
+   if GetVariable("debug") == "1" then
+      ColourNote("olive", "", "[dbg] ", "SteelBlue", "", msg)
+   end
+end
+
+function vi(alias, line, wc)
+   local togName
+   if string.lower(wc[1]) == "debug" then
+      togName = "debug"
+   elseif string.lower(wc[1]) == "int" then
+      togName = "tts_interrupt"
+   elseif string.lower(wc[1]) == "help" then
+      vi_help()
+      return
+   else
+      ColourNote("steelblue", "", "Valid options are:")
+      ColourNote("steelblue", "", "vi int                    > enables/disables tts interrupt for message review (not categories)")
+      ColourNote("steelblue", "", "vi add Category=Message   > adds a line to and creates category")
+      ColourNote("steelblue", "", "vi help                   > display help file")
+      ColourNote("steelblue", "", "vi debug                  > enables/disables debug for testing only")
+      return
+   end
+   if (GetVariable(togName) == "1") then
+      SetVariable(togName, "0")
+      print("")
+      printmsg("vi review buffers: " .. togName .. " has been disabled.")
+      print("")
+   else
+      SetVariable(togName, "1")
+      print("")
+      printmsg("vi review buffers: " .. togName .. " has been enabled.")
+      print("")
+   end
+end
+
+function OnPluginSaveState()
+   SetVariable("categories_list", json.encode(categories))
+end
+
+-- set up initial important categories
+
+local default_categories = json.encode(
+   {"All","Say","Tells","URLs",}
+)
+categories = json.decode(GetVariable("categories_list") or default_categories)
+for _,c in ipairs(categories) do
+   review_add(nil, nil, {c, ""})
+end
+current_category = 1
+SaveState()
+
+]]>
+</script>
+</muclient>
