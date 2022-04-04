@@ -35,7 +35,7 @@
 <script>
 <![CDATA[
 require("commas")
-require("serialize")
+require("json")
 require("tprint")
 require("var")
 require("wait")
@@ -102,7 +102,7 @@ end
 
 
 function EventHandler.get_as_string(path)
-    return serialize.save_simple(EventHandler.get(path) or "")
+    return json.encode(EventHandler.get(path) or "")
 end
 ]]>
 </script>
