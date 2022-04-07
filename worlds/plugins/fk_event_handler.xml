@@ -111,6 +111,54 @@ end
 
 <triggers>
     <trigger
+     match="^Please select the character you wish to play \[[0-9 -]+, default:\d+\]: You have chosen to play (?<character>\w+)\.$"
+     enabled="y"
+     script="Char.login"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+
+    <trigger
+     match="^A strange voice says, 'We await your return, (?<character>\w+)\.\.\.'$"
+     enabled="y"
+     script="Char.logout"
+     regexp="y"
+     sequence="101"
+    >
+    </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Char
+--------------------------------------------------
+
+
+Char = {}
+
+
+function Char.login(trigger, line, wc)
+    local path = "char.login"
+    local data = {name=wc.character, line=line}
+    EventHandler.event(const.EVENT_TYPE.LOGIN, path, data)
+end
+
+
+function Char.logout(trigger, line, wc)
+    local path = "char.logout"
+    local data = {name=wc.character, line=line}
+    EventHandler.event(const.EVENT_TYPE.LOGIN, path, data)
+end
+]]>
+</script>
+
+
+
+<triggers>
+    <trigger
      match="^(?<speaker>.+) (?<verb>ask|exclaim|say)s?,? '(?<message>.+)'$"
      enabled="y"
      script="Communication.say"

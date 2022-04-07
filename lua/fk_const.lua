@@ -4,6 +4,8 @@ local const = {}
 -- To be used by event trackers' BroadcastPlugin/OnPluginBroadcast
 -- functions as the numeric message type.
 const.EVENT_TYPE = {
+    ["LOGIN"] = 0,
+
     -- eg, standing, sitting, meditating...
     ["POSITION"] = 1,
 
