@@ -34,49 +34,23 @@ require("tprint")
 require("var")
 require("wait")
 local const = require("fk_const")
+require("fk_event")
 require("fk_note")
 
 
 --------------------------------------------------
--- Config
+-- Manager
 --------------------------------------------------
 
 
-Config = {}
+Manager = {}
 
 
-function Config.initialize()
-    Config.load()
+function Manager.login(character)
 end
 
 
-function Config.default()
-    local data = {
-    }
-    return serialize.save_simple(data)
-end
-
-
-function Config.load()
-    local strvar = var.config or Config.default()
-    local data = loadstring("return " .. strvar)()
-    Config.data = data
-end
-
-
-function Config.save()
-    var.config = serialize.save_simple(Config.data)
-end
-
-
-function Config.get(key)
-    return Config.data[key]
-end
-
-
-function Config.set(key, val)
-    Config.data[key] = val
-    Config.save()
+function Manager.logout(character)
 end
 ]]>
 </script>
@@ -136,6 +110,16 @@ end
 
 
 function OnPluginBroadcast(msg, id, name, text)
+    if (id ~= const.PLUGIN.EVENT_HANDLER
+    or msg ~= const.EVENT_TYPE.LOGIN) then
+        return
+    end
+
+    local path = utils.split(text, ".")
+    local action = path[2] -- 'login' or 'logout'.
+    local character = fk_event(text).name
+print("action:", action)
+    Manager[action](character)
 end
 ]]>
 </script>
