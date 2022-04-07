@@ -26,6 +26,34 @@
 
 
 
+<aliases>
+    <alias
+     match="^&cmdPrefix; +load +(?<character>\w+)$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        Manager.load("%&lt;character&gt;")
+     </send>
+    </alias>
+    <alias
+     match="^&cmdPrefix; +unload$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+     <send>
+        Manager.unload(true)
+     </send>
+    </alias>
+</aliases>
+
+
 <script>
 <![CDATA[
 require("commas")
@@ -44,13 +72,74 @@ require("fk_note")
 
 
 Manager = {}
+Manager.ID = GetPluginID()
+Manager.FULL_PATH = GetPluginInfo(Manager.ID, 6)
+Manager.DIRECTORY, Manager.FILE = Manager.FULL_PATH:match("^(.+\\)(.+)$")
 
 
 function Manager.login(character)
+    Manager.load(character)
 end
 
 
 function Manager.logout(character)
+    Manager.unload()
+end
+
+
+function Manager.load(character)
+    Manager.unload()
+    local plugin = Utility.get_character_plugin(character)
+    if (not plugin) then
+        local msg = "No character profile found for %s."
+        Utility.msg_major(msg:format(character))
+        return
+    end
+    local pluginPath = Manager.DIRECTORY .. plugin.file
+    local code = LoadPlugin(pluginPath)
+    if (code ~= error_code.eOK) then
+        local msg = "Failed to load character profile for %s."
+        Utility.msg_major(msg:format(plugin.character))
+        Utility.msg_minor(error_desc[code])
+        return
+    end
+    local msg = "Loaded character profile for %s."
+    Utility.msg_major(msg:format(plugin.character))
+end
+
+
+function Manager.unload(report)
+    local plugins = Utility.get_plugin_list()
+    local countUnloaded = 0
+    for _, plugin in ipairs(plugins) do
+        if (Manager.unload_single(plugin, report)) then
+            countUnloaded = countUnloaded + 1
+        end
+    end
+    if (report and countUnloaded == 0) then
+        Utility.msg_major("No character profiles unloaded.")
+    end
+end
+
+
+function Manager.unload_single(plugin)
+    local character = plugin.name:match("^FK_Character_(%a+)$")
+    local isThisPlugin = plugin.id == Manager.ID
+    if (not character or isThisPlugin) then
+        return false
+    end
+    local code = UnloadPlugin(plugin.id)
+    if (code ~= error_code.eOK) then
+        local msg = "Failed to unload character profile for %s."
+        Utility.msg_major(msg:format(character))
+        Utility.msg_minor(error_desc[code])
+        return
+    end
+    if (report) then
+        local msg = "Unloaded character profile for %s."
+        Utility.msg_major(msg:format(character))
+    end
+    return true
 end
 ]]>
 </script>
@@ -77,6 +166,82 @@ end
 
 
 function Utility.deinitialize()
+end
+
+
+function Utility.msg_major(str)
+    local msg = "[{B0}Char Manager{70}]: " .. str
+    fk_note(msg)
+end
+
+
+function Utility.msg_minor(str)
+    local msg = "                " .. str
+    fk_note(msg)
+end
+
+
+function Utility.get_plugin_name(id)
+    return GetPluginInfo(id, 1)
+end
+
+
+function Utility.get_plugin_list()
+    local plugins = {}
+    local pluginIDs = GetPluginList()
+    -- Shouldn't be possible, but...
+    if (not pluginIDs or #pluginIDs == 0) then
+        return plugins
+    end
+    for _, id in ipairs(pluginIDs) do
+        local name = Utility.get_plugin_name(id)
+        local plugin = {id=id, name=name}
+        table.insert(plugins, plugin)
+    end
+    return plugins
+end
+
+
+function Utility.get_character_plugin_list()
+    local filePattern = Manager.DIRECTORY .. "fk_character_*.xml"
+    local characterFiles = utils.readdir(filePattern)
+    local pluginFiles = {}
+    if (not characterFiles) then
+        return pluginFiles
+    end
+    for fileName in pairs(characterFiles) do
+        if (fileName ~= Manager.FILE) then
+            local characterName = fileName:match("^fk_character_(%a+).xml$")
+            characterName = Utility.pascal_case(characterName)
+            local pluginFile = {file=fileName, character=characterName}
+            table.insert(pluginFiles, pluginFile)
+        end
+    end
+    table.sort(pluginFiles,
+        function(e1, e2) return e1.character < e2.character end
+    )
+    return pluginFiles
+end
+
+
+function Utility.get_character_plugin(character)
+    character = Utility.pascal_case(character)
+    local plugins = Utility.get_character_plugin_list()
+    for _, plugin in ipairs(plugins) do
+        if (plugin.character == character) then
+            return plugin
+        end
+    end
+end
+
+
+function Utility.pascal_case(str)
+    str = str:gsub("(%a)([%w_']*)",
+        function(first,remainder)
+            return string.format("%s%s", first:upper(), remainder:lower())
+        end
+    )
+    return str
 end
 ]]>
 </script>
@@ -118,7 +283,6 @@ function OnPluginBroadcast(msg, id, name, text)
     local path = utils.split(text, ".")
     local action = path[2] -- 'login' or 'logout'.
     local character = fk_event(text).name
-print("action:", action)
     Manager[action](character)
 end
 ]]>
