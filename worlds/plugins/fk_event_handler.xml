@@ -115,11 +115,20 @@ end
      enabled="y"
      script="Communication.say"
      regexp="y"
+     keep_evaluating="y"
      sequence="100"
     >
     </trigger>
     <trigger
-     match="^(?<speaker>.+) (?<verb>ask|exclaim|say)s? to (?<receiver>.+),? '(?<message>.+)'$"
+     match="^(?<speaker>.+) (?<verb>exclaim|say)s? to (?<receiver>.+),? '(?<message>.+)'$"
+     enabled="y"
+     script="Communication.say"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     match="^(?<speaker>.+) (?<verb>ask)s? (?<receiver>.+),? '(?<message>.+)'$"
      enabled="y"
      script="Communication.say"
      regexp="y"
