@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!DOCTYPE muclient>
-<!-- Saved on Monday, April 04, 2022, 6:23 PM -->
+<!-- Saved on Thursday, April 07, 2022, 7:02 PM -->
 <!-- MuClient version 5.06 -->
 <!-- Written by Nick Gammon -->
 <!-- Home Page: http://www.mushclient.com/ -->
@@ -8,7 +8,7 @@
 <world
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
 
    auto_say_override_prefix="-"
    auto_say_string="say "
@@ -115,7 +115,7 @@
 <triggers
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 </triggers>
 
@@ -124,7 +124,7 @@
 <aliases
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 </aliases>
 
@@ -133,7 +133,7 @@
 <timers
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 </timers>
 
@@ -142,7 +142,7 @@
 <macros
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 
   <macro name="up" type="send_now" >
@@ -236,7 +236,7 @@
 <variables
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 </variables>
 
@@ -245,7 +245,7 @@
 <colours
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 
 <ansi>
@@ -302,7 +302,7 @@
 <keypad
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 
   <key name="0" >
@@ -416,7 +416,7 @@
 <printing
    muclient_version="5.06"
    world_file_version="15"
-   date_saved="2022-04-04 18:23:31"
+   date_saved="2022-04-07 19:02:36"
   >
 
 <ansi>
