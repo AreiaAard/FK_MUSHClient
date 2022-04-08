@@ -51,6 +51,16 @@
         Manager.unload(true)
      </send>
     </alias>
+
+    <alias
+     match="^&cmdPrefix; +create +(?<character>\w+)$"
+     enabled="y"
+     script="Manager.create_new_profile"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
 </aliases>
 
 
@@ -140,6 +150,52 @@ function Manager.unload_single(plugin)
         Utility.msg_major(msg:format(character))
     end
     return true
+end
+
+
+function Manager.create_new_profile(alias, line, wc)
+    local character = Utility.pascal_case(wc.character)
+    if (Utility.get_character_plugin(character)) then
+        local msg = "A character profile for %s already exists."
+        Utility.msg_major(msg:format(character))
+        return
+    end
+    local templatePath = Manager.DIRECTORY .. "template.txt"
+    local template, errorMsg = io.open(templatePath, "r")
+    if (not template) then
+        Utility.msg_major("Failed to load character profile template.")
+        if (errorMsg) then
+            Utility.msg_minor(errorMsg)
+        end
+        return
+    end
+    local text = template:read("*a")
+    template:close()
+
+    local date = os.date("*t")
+    local timestamp = "%04d-%02d-%02d %02d:%02d:%02d"
+    timestamp = timestamp:format(
+        date.year, date.month, date.day, date.hour, date.min, date.sec
+    )
+    local id = GetUniqueID()
+    text = text:gsub("{{characterName}}", character)
+    text = text:gsub("{{id}}", id)
+    text = text:gsub("{{timestamp}}", timestamp)
+
+    local filename = string.format("fk_character_%s.xml", character:lower())
+    local profile, errorMsg = io.open(Manager.DIRECTORY .. filename, "w")
+    if (not template) then
+        Utility.msg_major("Failed to write new character profile.")
+        if (errorMsg) then
+            Utility.msg_minor(errorMsg)
+        end
+        return
+    end
+    profile:write(text)
+    profile:close()
+
+    local msg = "Created new character profile for %s."
+    Utility.msg_major(msg:format(character))
 end
 ]]>
 </script>
