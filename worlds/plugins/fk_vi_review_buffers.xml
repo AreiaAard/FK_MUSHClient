@@ -836,11 +836,23 @@ function OnPluginBroadcast(msg, id, name, text)
     end
     if (id == const.PLUGIN.EVENT_HANDLER) then
         local path = utils.split(text, ".")
+        local data = fk_event(text)
+
         if (msg == const.EVENT_TYPE.COMMUNICATION) then
-            local data = fk_event(text)
             if (data.line) then
                 review_addline(path[2], data.line)
             end
+
+        elseif (msg == const.EVENT_TYPE.IMPROVEMENT) then
+            local skill = data.skill
+            local newLevel = data.level
+            local msg = string.format("Improved %s.", skill)
+            if (newLevel) then
+                local newLevelMsg = string.format(" Now %s.", newLevel)
+                msg = msg .. newLevelMsg
+            end
+            review_addline(path[2], msg)
+
         end
     end
 end

@@ -122,6 +122,12 @@ function Config.default()
         volume = 100,
         panning = 0,
     }
+    data.events.improvement = {
+        desc = "Skill improvements",
+        defaultWav = "improve.wav",
+        volume = 100,
+        panning = 0,
+    }
 
     return serialize.save_simple(data)
 end
@@ -311,12 +317,9 @@ function OnPluginBroadcast(msg, id, name, text)
     end
 
     local eventPath = utils.split(text, ".")
-    if (msg == const.EVENT_TYPE.COMMUNICATION) then
-        Soundpack.event(eventPath[2])
-        return
-    end
-
-    if (msg == const.EVENT_TYPE.COMBAT) then
+    if (msg == const.EVENT_TYPE.COMMUNICATION
+    or msg == const.EVENT_TYPE.COMBAT
+    or msg == const.EVENT_TYPE.IMPROVEMENT) then
         Soundpack.event(eventPath[2])
         return
     end

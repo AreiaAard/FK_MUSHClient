@@ -127,6 +127,23 @@ end
      sequence="101"
     >
     </trigger>
+
+    <trigger
+     match="^You learn from your success and improve at (?<skill>.+)!$"
+     enabled="y"
+     script="Char.improve"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     match="^You learn from your success and are now an? (?<level>\w+) at (?<skill>.+)!$"
+     enabled="y"
+     script="Char.improve"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -151,6 +168,13 @@ function Char.logout(trigger, line, wc)
     local path = "char.logout"
     local data = {name=wc.character, line=line}
     EventHandler.event(const.EVENT_TYPE.LOGIN, path, data)
+end
+
+
+function Char.improve(trigger, line, wc)
+    local path = "char.improvement"
+    local data = {skill=wc.skill, level=wc.level, line=line}
+    EventHandler.event(const.EVENT_TYPE.IMPROVEMENT, path, data)
 end
 ]]>
 </script>
