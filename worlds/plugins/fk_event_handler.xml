@@ -379,4 +379,77 @@ end
 </script>
 
 
+
+<triggers>
+    <trigger
+     match="^(?<leader>.+)'s? group:$"
+     enabled="y"
+     script="Group.list_start"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     name="trigger_group_list_member"
+     match="^\[ *(?<gender>\w+) +(?<race>\w+) *\] (?<name>.+) +(?<hp>\d+)%hp +(?<mn>\d*)%mn +(?<mv>\d+)%mv$"
+     enabled="n"
+     script="Group.list_member"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     name="trigger_group_list_end"
+     match="^.*$"
+     enabled="n"
+     script="Group.list_end"
+     regexp="y"
+     sequence="101"
+    >
+    </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Group
+--------------------------------------------------
+
+
+Group = {}
+
+
+function Group.list_start(trigger, line, wc)
+    EnableTrigger("trigger_group_list_member", true)
+    EnableTrigger("trigger_group_list_end", true)
+    Group.info = {}
+    Group.info.members = {}
+    Group.info.leader = wc.leader
+end
+
+
+function Group.list_member(trigger, line, wc)
+    Group.info.members[wc.name] = {
+        name = wc.name,
+        race = wc.race,
+        gender = wc.gender,
+        hp = tonumber(wc.hp),
+        mn = tonumber(wc.mn),
+        mv = tonumber(wc.mv),
+    }
+end
+
+
+function Group.list_end(trigger, line, wc)
+    EnableTrigger("trigger_group_list_member", false)
+    EnableTrigger("trigger_group_list_end", false)
+    local path = "group.list"
+    EventHandler.event(const.EVENT_TYPE.GROUP, path, Group.info)
+    Group.info = nil
+end
+]]>
+</script>
+
+
 </muclient>
