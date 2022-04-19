@@ -39,19 +39,6 @@
     </alias>
 
     <alias
-     match="^cm(.*)$"
-     enabled="y"
-     send_to="12"
-     regexp="y"
-     ignore_case="y"
-     sequence="100"
-    >
-     <send>
-        Send("combatmode%1")
-     </send>
-    </alias>
-
-    <alias
      match="^gac(\d*)$"
      enabled="y"
      send_to="12"
