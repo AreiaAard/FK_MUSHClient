@@ -1,0 +1,47 @@
+require("fk_spells")
+
+
+spellbook = Spellbook:new{
+    spells.BLESS,
+    spells.BLESS_WATER,
+    spells.CREATE_WATER,
+    spells.CURE_LIGHT,
+    spells.DETECT_POISON,
+    spells.DIVINE_FAVOR,
+    spells.GOLDEN_BARDING,
+    spells.KNOW_ALIGNMENT,
+    spells.PROTECTION,
+    spells.READ_MAGIC,
+    spells.REFRESH,
+    spells.RESISTANCE,
+
+    spells.BULLS_STRENGTH,
+    spells.EAGLES_SPLENDOR,
+    spells.OWLS_WISDOM,
+    spells.REMOVE_PARALYSIS,
+    spells.RESILIENCE,
+    spells.RESIST_ACID,
+    spells.RESIST_COLD,
+    spells.RESIST_ELECTRICITY,
+    spells.RESIST_FIRE,
+
+    spells.ALERTNESS,
+    spells.CURE_BLINDNESS,
+    spells.CURE_MODERATE,
+    spells.DISPEL_MAGIC,
+    spells.HEAL_MOUNT,
+    spells.MAGIC_CIRCLE,
+    spells.MAGIC_WEAPON,
+    spells.PRAYER,
+    spells.REMOVE_CURSE,
+    spells.RIGHTEOUS_FURY,
+    spells.WITCH_LIGHT,
+
+    spells.BREAK_ENCHANTMENT,
+    spells.CURE_SERIOUS,
+    spells.DEATH_WARD,
+    spells.DISPEL_EVIL,
+    spells.NEUTRALISE_POISON,
+    spells.RESTORATION,
+    spells.WINGED_MOUNT,
+}
