@@ -144,6 +144,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^(?<mode>\w+) (?:\w+ )?mode set to (?<enabled>on|off)\.$"
+     enabled="y"
+     script="Char.combatmode"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -175,6 +184,17 @@ function Char.improve(trigger, line, wc)
     local path = "char.improvement"
     local data = {skill=wc.skill, level=wc.level, line=line}
     EventHandler.event(const.EVENT_TYPE.IMPROVEMENT, path, data)
+end
+
+
+function Char.combatmode(trigger, line, wc)
+    local path = "config.combatmode"
+    local data = {
+        mode = wc.mode:lower(),
+        enabled = wc.enabled:lower() == "on",
+        line = line,
+    }
+    EventHandler.event(const.EVENT_TYPE.CONFIG, path, data)
 end
 ]]>
 </script>
