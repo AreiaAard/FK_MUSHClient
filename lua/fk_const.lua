@@ -13,8 +13,8 @@ const.EVENT_TYPE = {
 
     ["COMMUNICATION"] = 3,
 
-    -- eg, walking, running...
-    ["SPEED"] = 4,
+    -- eg, combatmode, killmode, speed...
+    ["CONFIG"] = 4,
 
     -- Regaining spells, daily abilities, etc.
     ["RECOVERY"] = 5,
