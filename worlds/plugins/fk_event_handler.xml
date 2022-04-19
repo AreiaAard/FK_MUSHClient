@@ -153,6 +153,15 @@ end
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^Your killmode is: (?<mode>\w+)$"
+     enabled="y"
+     script="Char.killmode"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -192,6 +201,16 @@ function Char.combatmode(trigger, line, wc)
     local data = {
         mode = wc.mode:lower(),
         enabled = wc.enabled:lower() == "on",
+        line = line,
+    }
+    EventHandler.event(const.EVENT_TYPE.CONFIG, path, data)
+end
+
+
+function Char.killmode(trigger, line, wc)
+    local path = "config.killmode"
+    local data = {
+        mode = wc.mode:lower(),
         line = line,
     }
     EventHandler.event(const.EVENT_TYPE.CONFIG, path, data)
