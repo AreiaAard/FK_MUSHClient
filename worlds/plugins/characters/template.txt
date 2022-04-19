@@ -26,58 +26,10 @@
 
 <script>
 <![CDATA[
-require("commas")
-require("json")
-require("tprint")
-require("var")
-require("wait")
-local const = require("fk_const")
-require("fk_event")
-require("fk_note")
-
-
---------------------------------------------------
--- Config
---------------------------------------------------
-
-
-Config = {}
-
-
-function Config.initialize()
-    Config.load()
-end
-
-
-function Config.default()
-    local data = {
-    }
-    return serialize.save_simple(data)
-end
-
-
-function Config.load()
-    local strvar = var.config or Config.default()
-    local data = loadstring("return " .. strvar)()
-    Config.data = data
-end
-
-
-function Config.save()
-    var.config = serialize.save_simple(Config.data)
-end
-
-
-function Config.get(key)
-    return Config.data[key]
-end
-
-
-function Config.set(key, val)
-    Config.data[key] = val
-    Config.save()
-end
 ]]>
+require("fk_character_config")
+
+
 </script>
 
 
@@ -94,6 +46,7 @@ Utility = {}
 
 function Utility.initialize()
     local initializers = {
+        Config.initialize,
     }
     for _, initializer in ipairs(initializers) do
         initializer()
@@ -102,6 +55,18 @@ end
 
 
 function Utility.deinitialize()
+end
+
+
+function Utility.msg_major(msg)
+    local str = "[{B0}Char Profile{70}]: " .. msg
+    fk_note(str)
+end
+
+
+function Utility.msg_minor(msg)
+    local str = "                " .. msg
+    fk_note(str)
 end
 ]]>
 </script>
