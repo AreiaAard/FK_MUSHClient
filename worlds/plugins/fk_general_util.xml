@@ -220,11 +220,45 @@ Core = {}
 
 
 function Core.initialize()
-    AcceleratorTo("ALT+G", "group", sendto.world)
-    AcceleratorTo("ALT+L", "scan", sendto.execute)
-    AcceleratorTo("ALT+P", "config +prompt;config -prompt", sendto.execute)
-    AcceleratorTo("ALT+T", "time", sendto.world)
-    AcceleratorTo("ALT+W", "who", sendto.world)
+    Core.add_accelerators()
+    Core.add_tab_completion_items()
+end
+
+
+function Core.add_accelerators()
+    local accelerators = {
+        {key="ALT+G", send="group"},
+        {key="ALT+P", send="config +prompt;config -prompt", to="execute"},
+        {key="ALT+T", send="time"},
+        {key="ALT+W", send="who"},
+        {key="ALT+NUMPAD1", send="look southwest"},
+        {key="ALT+NUMPAD2", send="look south"},
+        {key="ALT+NUMPAD3", send="look southeast"},
+        {key="ALT+NUMPAD4", send="look west"},
+        {key="ALT+NUMPAD5", send="scan", to="execute"},
+        {key="ALT+NUMPAD6", send="look east"},
+        {key="ALT+NUMPAD7", send="look northwest"},
+        {key="ALT+NUMPAD8", send="look north"},
+        {key="ALT+NUMPAD9", send="look northeast"},
+        {key="ALT+SUBTRACT", send="look up"},
+        {key="ALT+ADD", send="look down"},
+    }
+    for _, accelerator in ipairs(accelerators) do
+        AcceleratorTo(
+            accelerator.key, accelerator.send,
+            sendto[accelerator.to or "world"]
+        )
+    end
+end
+
+
+function Core.add_tab_completion_items()
+    local items = {
+        "<clear>", "<nofunctions>", "all.", "all.coins", "corpse"
+    }
+    for _, item in ipairs(items) do
+        ShiftTabCompleteItem(item)
+    end
 end
 ]]>
 </script>
