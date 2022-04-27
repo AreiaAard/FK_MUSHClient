@@ -33,4 +33,16 @@ function fkColors.to_ANSI(str)
 end
 
 
+function fkColors.strip(str)
+    -- Temporarily remove escaped color codes, but recall what colors
+    -- they contain.
+    str = str:gsub("{{(%w%w)}}", "\0%1")
+    -- Remove any remaining (non-escaped) codes.
+    str = str:gsub("{%w%w}", "")
+    -- Restore escaped codes.
+    str = str:gsub("%z(%w%w)", "{%1}")
+    return str
+end
+
+
 return fkColors
