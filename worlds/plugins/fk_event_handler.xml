@@ -24,14 +24,6 @@
 
 
 
-<aliases>
-</aliases>
-
-
-<triggers>
-</triggers>
-
-
 <script>
 <![CDATA[
 require("commas")
@@ -39,7 +31,9 @@ require("json")
 require("tprint")
 require("var")
 require("wait")
+
 local const = require("fk_const")
+require("fk_note")
 
 
 --------------------------------------------------
@@ -413,6 +407,45 @@ end
 Combat = {}
 
 
+function Combat.initialize()
+    Combat.add_triggers()
+end
+
+
+function Combat.add_triggers()
+    for position, actions in pairs(const.MELEE) do
+        for action, damtypes in pairs(actions) do
+            for damtype, messages in pairs(damtypes) do
+                for index, message in ipairs(messages) do
+                    Combat.add_melee_trigger(
+                        message, position, action, damtype, index
+                    )
+                end
+            end
+        end
+    end
+end
+
+
+function Combat.add_melee_trigger(match, position, action, damtype, index)
+    local success = true
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression
+    local color = custom_colour.NoChange
+    local name = "trigger_combat_melee_%s_%s_%s%d"
+    name = name:format(position:lower(), action:lower(), damtype:lower(), index)
+    local code = AddTrigger(
+        name, match, "", flags, color, 0, "", "Combat.attack_melee"
+    )
+    if (code ~= error_code.eOK) then
+        success = false
+        local msg = "Failed to add trigger %s:"
+        Utility.msg_major(msg:format(name))
+        Utility.msg_minor(error_desc[code] .. ".")
+    end
+    return success
+end
+
+
 function Combat.event(data)
     local path = "combat." .. data.action
     EventHandler.event(const.EVENT_TYPE.COMBAT, path, data)
@@ -437,6 +470,25 @@ function Combat.death(trigger, line, wc)
         defender = wc.defender,
         line = line,
     }
+end
+
+
+function Combat.attack_melee(trigger, line, wc)
+    local hit, damtype = trigger:match(
+        "^trigger_combat_melee_%a+_(%a+)_(%a+)%d+$"
+    )
+    hit = hit == "hit"
+    local offender = wc.offender == "You" and "you" or wc.offender
+    local defender = wc.defender == "You" and "you" or wc.defender
+    local data = {
+        offender = offender,
+        defender = defender,
+        action = "attack",
+        hit = hit,
+        damtype = damtype,
+        line = line,
+    }
+    Combat.event(data)
 end
 ]]>
 </script>
@@ -510,6 +562,68 @@ function Group.list_end(trigger, line, wc)
     local path = "group.list"
     EventHandler.event(const.EVENT_TYPE.GROUP, path, Group.info)
     Group.info = nil
+end
+]]>
+</script>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Utility
+--------------------------------------------------
+
+Utility = {}
+
+
+function Utility.initialize()
+    local initializers = {
+        Combat.initialize,
+    }
+    for _, initializer in ipairs(initializers) do
+        initializer()
+    end
+end
+
+
+function Utility.deinitialize()
+end
+
+
+function Utility.msg_major(str)
+    local msg = "[{B0}Event Handler{70}]: " .. str
+    fk_note(msg)
+end
+
+
+function Utility.msg_minor(str)
+    local msg = "                 " .. str
+    fk_note(msg)
+end
+
+
+
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
+
+function OnPluginInstall()
+    Utility.initialize()
+end
+
+
+function OnPluginEnable()
+    OnPluginInstall()
+end
+
+
+function OnPluginClose()
+    Utility.deinitialize()
+end
+
+
+function OnPluginDisable()
+    OnPluginClose()
 end
 ]]>
 </script>
