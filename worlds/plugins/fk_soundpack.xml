@@ -54,6 +54,8 @@ require("serialize")
 require("tprint")
 require("var")
 require("wait")
+
+require("fk_event")
 local const = require("fk_const")
 require("fk_note")
 
@@ -126,6 +128,12 @@ function Config.default()
         desc = "Skill improvements",
         defaultWav = "improve.wav",
         volume = 100,
+        panning = 0,
+    }
+    data.events.injury = {
+        desc = "Injured in combat",
+        defaultWav = "hurt#7.wav",
+        volume = 65,
         panning = 0,
     }
 
@@ -318,10 +326,22 @@ function OnPluginBroadcast(msg, id, name, text)
 
     local eventPath = utils.split(text, ".")
     if (msg == const.EVENT_TYPE.COMMUNICATION
-    or msg == const.EVENT_TYPE.COMBAT
     or msg == const.EVENT_TYPE.IMPROVEMENT) then
         Soundpack.event(eventPath[2])
         return
+    end
+
+    if (msg == const.EVENT_TYPE.COMBAT) then
+        if (eventPath[2] == "engage" or eventPath[2] == "death") then
+            Soundpack.event(eventPath[2])
+            return
+        end
+        local attack = fk_event(text)
+        if (attack.hit) then
+            if (attack.defender == "you") then
+                Soundpack.event("injury")
+            end
+        end
     end
 end
 ]]>
