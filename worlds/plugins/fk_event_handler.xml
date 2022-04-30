@@ -27,6 +27,7 @@
 <script>
 <![CDATA[
 require("commas")
+require("copytable")
 require("json")
 require("tprint")
 require("var")
@@ -413,28 +414,19 @@ end
 
 
 function Combat.add_triggers()
-    for position, actions in pairs(const.MELEE) do
-        for action, damtypes in pairs(actions) do
-            for damtype, messages in pairs(damtypes) do
-                for index, message in ipairs(messages) do
-                    Combat.add_melee_trigger(
-                        message, position, action, damtype, index
-                    )
-                end
-            end
-        end
+    for i, message in pairs(const.COMBAT_MSG) do
+        Combat.add_trigger(i, message)
     end
 end
 
 
-function Combat.add_melee_trigger(match, position, action, damtype, index)
+function Combat.add_trigger(index, msg)
     local success = true
     local flags = trigger_flag.Enabled + trigger_flag.RegularExpression
     local color = custom_colour.NoChange
-    local name = "trigger_combat_melee_%s_%s_%s%d"
-    name = name:format(position:lower(), action:lower(), damtype:lower(), index)
+    local name = string.format("trigger_combat_%d", index)
     local code = AddTrigger(
-        name, match, "", flags, color, 0, "", "Combat.attack_melee"
+        name, msg.regex, "", flags, color, 0, "", "Combat.attack"
     )
     if (code ~= error_code.eOK) then
         success = false
@@ -473,22 +465,21 @@ function Combat.death(trigger, line, wc)
 end
 
 
-function Combat.attack_melee(trigger, line, wc)
-    local hit, damtype = trigger:match(
-        "^trigger_combat_melee_%a+_(%a+)_(%a+)%d+$"
-    )
-    hit = hit == "hit"
-    local offender = wc.offender == "You" and "you" or wc.offender
-    local defender = wc.defender == "You" and "you" or wc.defender
-    local data = {
-        offender = offender,
-        defender = defender,
-        action = "attack",
-        hit = hit,
-        damtype = damtype,
-        line = line,
-    }
-    Combat.event(data)
+function Combat.attack(trigger, line, wc)
+    local index = tonumber(trigger:match("^trigger_combat_(%d+)$"))
+    if (not const.COMBAT_MSG[index]) then
+        return
+    end
+    local event = copytable.deep(const.COMBAT_MSG[index])
+    event.regex = nil
+    event.offender = wc.offender == "You" and "you" or wc.offender
+    event.defender = wc.defender == "You" and "you" or wc.defender
+    event.line = line
+    local path = "combat." .. event.type
+    if (event.type == const.COMBAT_TYPE.ENGAGE) then
+        event.surprise = wc.approach:match("^surprise") and true or false
+    end
+    EventHandler.event(const.EVENT_TYPE.COMBAT, path, event)
 end
 ]]>
 </script>

@@ -41,232 +41,284 @@ const.PLUGIN = {
 }
 
 
+-- Combat event types.
+const.COMBAT_TYPE = {
+    MELEE = "melee",
+    SKILL = "skill",
+    SPELL = "spell",
+    DAMAGE = "damage",
+    ENGAGE = "engage",
+    DEATH = "death",
+}
+
+
+-- Damage types.
+const.DAMTYPE = {
+    ACID = "acid",
+    BASH = "bash",
+    BITE = "bite",
+    BREATH = "breath",
+    CLAW = "claw",
+    COLD = "cold",
+    DEATH = "death",
+    DRAIN = "drain",
+    EARTH = "earth",
+    ELECTRICITY = "electricity",
+    FIRE = "fire",
+    HIT = "hit",
+    KICK = "kick",
+    MAGIC = "magic",
+    PIERCE = "pierce",
+    PUNCH = "punch",
+    SLASH = "slash",
+    TAIL = "tail",
+    TENTACLE = "tentacle",
+    VARIANT = "variant",
+    WATER = "water",
+    WING = "wing",
+}
+
+
+-- Points of view in combat.
+const.COMBAT_POSITION = {
+    -- The current char is doing the attacking.
+    OFFENSE = "offense",
+    -- The current char is being attacked.
+    DEFENSE = "defense",
+    -- The current char is neither attacker nor defender.
+    OBSERVANT = "observant",
+}
+
+
 --------------------------------------------------
--- Melee combat messages as regex
--- 
--- Structure: MELEE.<POSITION>.<ACTION>.<DAMTYPE>[index]
--- Position: Either OFFENSE (the current char is the offender),
---     DEFENSE (the current char is the defender), or OBSERVANT (the
---     current char is neither offender nor defender). Recommended to
---     set the sequence of triggers using OBSERVANT messages to be
---     higher than those of OFFENSE and DEFENSE, as there are some
---     instances of duplicate match strings.
--- Action: HIT or MISS.
--- Damtype: BASH, BITE, CLAW, PIERCE, PUNCH, SLASH, etc. This might
---     return nil if no messages are yet implemented for that damtype.
--- Index: Numeric starting from 1.
+-- Combat messages.
+
+-- Note that it is recommended to set the sequence of triggers that
+--     use messages with the OBSERVANT position to be higher than
+--     those that use OFFENSE/DEFENSE position messages, as there can
+--     be some overlap with the regexes.
 --------------------------------------------------
 
-const.MELEE = {}
+const.COMBAT_MSG = {
+    -- Damage
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=1, regex="^(?<defender>.+) is slightly scratched\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=2, regex="^(?<defender>.+) has a few small cuts\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=3, regex="^(?<defender>.+) is badly bruised\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=4, regex="^(?<defender>.+) has several minor wounds\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=5, regex="^(?<defender>.+) has a couple of severe gashes\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=6, regex="^(?<defender>.+) is covered in cuts and bruises\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=7, regex="^(?<defender>.+) is badly injured\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=8, regex="^(?<defender>.+) is bleeding from several injuries\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=9, regex="^(?<defender>.+) is bleeding freely\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=10, regex="^(?<defender>.+) has several traumatic wounds\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=11, regex="^(?<defender>.+) has blood gushing from several grievous wounds\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=12, regex="^(?<defender>.+) is leaking heart-blood\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=13, regex="^(?<defender>.+) has suffered mortal injury\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=14, regex="^(?<defender>.+) is slowly bleeding to death\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=15, regex="^(?<defender>.+) is close to death\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=16, regex="^(?<defender>.+) is stunned, but will probably recover\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.DAMAGE, order=17, regex="^(?<defender>.+) is mortally wounded, and will die soon, if not aided\\.$"},
 
+    -- Offense engage
+    {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>You) (?<approach>approach|surprise) (?<defender>.+) and prepare to engage (?:him|her|it) in combat!$"},
 
-const.MELEE.OFFENSE = {}
+    -- Offense bash
+    {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>.+) evades (?<offender>you)r crushing attack\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<offender>You)r crush grazes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=2, regex="^(?<offender>You)r crush hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=3, regex="^(?<offender>You)r crush skillfully hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=4, regex="^(?<offender>You)r crush deftly hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=5, regex="^(?<offender>You)r crush violently hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=6, regex="^(?<offender>You)r crush crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=7, regex="^(?<offender>You)r crush skillfully crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=8, regex="^(?<offender>You)r crush deftly crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=9, regex="^(?<offender>You)r crush violently crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=10, regex="^With a bonecrunching sound (?<offender>you)r crush smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=11, regex="^With a bonecrunching sound (?<offender>you)r crush skillfully smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=12, regex="^With a bonecrunching sound (?<offender>you)r crush deftly smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=13, regex="^With a bonecrunching sound (?<offender>you)r crush violently smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=14, regex="^(?<offender>You)r crush shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=15, regex="^(?<offender>You)r crush skillfully shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=16, regex="^(?<offender>You)r crush deftly shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=17, regex="^(?<offender>You)r crush violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=18, regex="^(?<offender>You)r crush beats (?<defender>.+) to a bloody pulp\\.$"},
 
-const.MELEE.OFFENSE.MISS = {}
-const.MELEE.OFFENSE.MISS.BASH = {"^(?<defender>.+) evades (?<offender>you)r crushing attack\\.$"}
-const.MELEE.OFFENSE.MISS.PIERCE = {"^(?<defender>.+) sidesteps (?<offender>you)r piercing attack\\.$"}
-const.MELEE.OFFENSE.MISS.SLASH = {"^(?<defender>.+) ducks under (?<offender>you)r slashing attack\\.$"}
+    -- Offense pierce
+    {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<defender>.+) sidesteps (?<offender>you)r piercing attack\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<offender>You)r pierce bruises (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=2, regex="^(?<offender>You)r pierce nicks (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=3, regex="^(?<offender>You)r pierce scratches (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=4, regex="^(?<offender>You)r pierce shallowly cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=5, regex="^(?<offender>You)r pierce cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=6, regex="^(?<offender>You)r pierce deeply cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=7, regex="^(?<offender>You)r pierce shallowly penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=8, regex="^(?<offender>You)r pierce penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=9, regex="^(?<offender>You)r pierce deeply penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=10, regex="^With a sickening sound (?<offender>you)r pierce perforates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=11, regex="^With a sickening sound (?<offender>you)r pierce deeply perforates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=12, regex="^With a sickening sound (?<offender>you)r pierce shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=13, regex="^With a sickening sound (?<offender>you)r pierce violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=14, regex="^(?<offender>You)r pierce tears open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=15, regex="^(?<offender>You)r pierce tears wounds into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=16, regex="^(?<offender>You)r pierce tears a gaping wound into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=17, regex="^(?<offender>You)r pierce minces (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=18, regex="^(?<offender>You)r pierce nearly bisects (?<defender>.+)'s .+\\.$"},
 
-const.MELEE.OFFENSE.HIT = {}
-const.MELEE.OFFENSE.HIT.BASH = {
-    "^(?<offender>You)r crush grazes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush skillfully hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush deftly hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush violently hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush skillfully crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush deftly crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush violently crushes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>you)r crush smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>you)r crush skillfully smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>you)r crush deftly smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>you)r crush violently smashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush skillfully shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush deftly shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r crush beats (?<defender>.+) to a bloody pulp\\.$",
-}
-const.MELEE.OFFENSE.HIT.PIERCE = {
-    "^(?<offender>You)r pierce bruises (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce nicks (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce scratches (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce shallowly cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce deeply cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce shallowly penetrates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce penetrates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce deeply penetrates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r pierce perforates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r pierce deeply perforates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r pierce shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r pierce violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce tears open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce tears wounds into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce tears a gaping wound into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce minces (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r pierce nearly bisects (?<defender>.+)'s .+\\.$",
-}
-const.MELEE.OFFENSE.HIT.SLASH = {
-    "^(?<offender>You)r slash cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash skillfully cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash viciously cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash viciously slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash skillfully slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash powerfully slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash lays open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash deeply gashes (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r slash shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r slash skillfully shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r slash deftly shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>you)r slash violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash tears open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash lacerates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash tears a gaping wound into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash minces (?<defender>.+)'s .+\\.$",
-    "^(?<offender>You)r slash nearly bisects (?<defender>.+)'s .+\\.$",
-}
+    -- Offense slash
+    {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<defender>.+) ducks under (?<offender>you)r slashing attack\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<offender>You)r slash cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=2, regex="^(?<offender>You)r slash skillfully cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=3, regex="^(?<offender>You)r slash viciously cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=4, regex="^(?<offender>You)r slash slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=5, regex="^(?<offender>You)r slash viciously slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=6, regex="^(?<offender>You)r slash skillfully slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=7, regex="^(?<offender>You)r slash powerfully slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=8, regex="^(?<offender>You)r slash lays open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=9, regex="^(?<offender>You)r slash deeply gashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=10, regex="^With a sickening sound (?<offender>you)r slash shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=11, regex="^With a sickening sound (?<offender>you)r slash skillfully shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=12, regex="^With a sickening sound (?<offender>you)r slash deftly shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=13, regex="^With a sickening sound (?<offender>you)r slash violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=14, regex="^(?<offender>You)r slash tears open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=15, regex="^(?<offender>You)r slash lacerates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=16, regex="^(?<offender>You)r slash tears a gaping wound into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=17, regex="^(?<offender>You)r slash minces (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=18, regex="^(?<offender>You)r slash nearly bisects (?<defender>.+)'s .+\\.$"},
 
+    -- Defense engage
+    {position=const.COMBAT_POSITION.DEFENSE, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>.+) (?<approach>approaches|surprises) (?<defender>you) and prepares to engage you in combat!$"},
 
-const.MELEE.DEFENSE = {}
+    -- Defense bash
+    {position=const.COMBAT_POSITION.DEFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>You) evade (?<offender>.+)'s crushing attack\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<offender>.+)'s crush grazes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=2, regex="^(?<offender>.+)'s crush hits (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=3, regex="^(?<offender>.+)'s crush skillfully hit (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=4, regex="^(?<offender>.+)'s crush deftly hits (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=5, regex="^(?<offender>.+)'s crush violently hits (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=6, regex="^(?<offender>.+)'s crush crushes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=7, regex="^(?<offender>.+)'s crush skillfully crushes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=8, regex="^(?<offender>.+)'s crush deftly crushes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=9, regex="^(?<offender>.+)'s crush violently crushes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=10, regex="^With a bonecrunching sound (?<offender>.+)'s crush smashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=11, regex="^With a bonecrunching sound (?<offender>.+)'s crush skillfully smashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=12, regex="^With a bonecrunching sound (?<offender>.+)'s crush deftly smashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=13, regex="^With a bonecrunching sound (?<offender>.+)'s crush violently smashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=14, regex="^(?<offender>.+)'s crush shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=15, regex="^(?<offender>.+)'s crush skillfully shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=16, regex="^(?<offender>.+)'s crush deftly shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=17, regex="^(?<offender>.+)'s crush violently shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=18, regex="^(?<offender>.+)'s crush beats (?<defender>you) to a bloody pulp\\.$"},
 
-const.MELEE.DEFENSE.MISS = {}
-const.MELEE.DEFENSE.MISS.BASH = {"^(?<defender>You) evade (?<offender>.+)'s crushing attack\\.$"}
-const.MELEE.DEFENSE.MISS.PIERCE = {"^(?<defender>You) sidestep (?<offender>.+)'s piercing attack\\.$"}
-const.MELEE.DEFENSE.MISS.SLASH = {"^(?<defender>You) duck under (?<offender>.+)'s slashing attack\\.$"}
+    -- Defense pierce
+    {position=const.COMBAT_POSITION.DEFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<defender>You) sidestep (?<offender>.+)'s piercing attack\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<offender>.+)'s pierce bruises (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=2, regex="^(?<offender>.+)'s pierce nicks (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=3, regex="^(?<offender>.+)'s pierce scratches (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=4, regex="^(?<offender>.+)'s pierce shallowly cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=5, regex="^(?<offender>.+)'s pierce cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=6, regex="^(?<offender>.+)'s pierce deeply cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=7, regex="^(?<offender>.+)'s pierce shallowly penetrates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=8, regex="^(?<offender>.+)'s pierce penetrates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=9, regex="^(?<offender>.+)'s pierce deeply penetrates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=10, regex="^With a sickening sound (?<offender>.+)'s pierce perforates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=11, regex="^With a sickening sound (?<offender>.+)'s pierce deeply perforates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=12, regex="^With a sickening sound (?<offender>.+)'s pierce shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=13, regex="^With a sickening sound (?<offender>.+)'s pierce violently shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=14, regex="^(?<offender>.+)'s pierce tears open (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=15, regex="^(?<offender>.+)'s pierce tears wounds into (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=16, regex="^(?<offender>.+)'s pierce tears a gaping wound into (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=17, regex="^(?<offender>.+)'s pierce minces (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=18, regex="^(?<offender>.+)'s pierce nearly bisects (?<defender>you)r .+\\.$"},
 
-const.MELEE.DEFENSE.HIT = {}
-const.MELEE.DEFENSE.HIT.BASH = {
-    "^(?<offender>.+)'s crush grazes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush hits (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush skillfully hits (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush deftly hits (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush violently hits (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush crushes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush skillfully crushes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush deftly crushes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush violently crushes (?<defender>you)r .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush smashes (?<defender>you)r .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush skillfully smashes (?<defender>you)r .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush deftly smashes (?<defender>you)r .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush violently smashes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush skillfully shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush deftly shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush violently shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s crush beats (?<defender>you) to a bloody pulp\\.$",
-}
-const.MELEE.DEFENSE.HIT.PIERCE = {
-    "^(?<offender>.+)'s pierce bruises (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce nicks (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce scratches (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce shallowly cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce deeply cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce shallowly penetrates (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce penetrates (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce deeply penetrates (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce perforates (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce deeply perforates (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce shreds (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce violently shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce tears open (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce tears wounds into (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce tears a gaping wound into (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce minces (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s pierce nearly bisects (?<defender>you)r .+\\.$",
-}
-const.MELEE.DEFENSE.HIT.SLASH = {
-    "^(?<offender>.+)'s slash cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash skillfully cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash viciously cuts (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash slashes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash viciously slashes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash skillfully slashes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash powerfully slashes (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash lays open (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash deeply gashes (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash shreds (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash skillfully shreds (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash deftly shreds (?<defender>you)r .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash violently shreds (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash tears open (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash lacerates (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash tears a gaping wound into (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash minces (?<defender>you)r .+\\.$",
-    "^(?<offender>.+)'s slash nearly bisects (?<defender>you)r .+\\.$",
-}
+    -- Defense slash
+    {position=const.COMBAT_POSITION.DEFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<defender>You) duck under (?<offender>.+)'s slashing attack\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<offender>.+)'s slash cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=2, regex="^(?<offender>.+)'s slash skillfully cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=3, regex="^(?<offender>.+)'s slash viciously cuts (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=4, regex="^(?<offender>.+)'s slash slashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=5, regex="^(?<offender>.+)'s slash viciously slashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=6, regex="^(?<offender>.+)'s slash skillfully slashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=7, regex="^(?<offender>.+)'s slash powerfully slashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=8, regex="^(?<offender>.+)'s slash lays open (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=9, regex="^(?<offender>.+)'s slash deeply gashes (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=10, regex="^With a sickening sound (?<offender>.+)'s slash shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=11, regex="^With a sickening sound (?<offender>.+)'s slash skillfully shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=12, regex="^With a sickening sound (?<offender>.+)'s slash deftly shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=13, regex="^With a sickening sound (?<offender>.+)'s slash violently shreds (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=14, regex="^(?<offender>.+)'s slash tears open (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=15, regex="^(?<offender>.+)'s slash lacerates (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=16, regex="^(?<offender>.+)'s slash tears a gaping wound into (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=17, regex="^(?<offender>.+)'s slash minces (?<defender>you)r .+\\.$"},
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=18, regex="^(?<offender>.+)'s slash nearly bisects (?<defender>you)r .+\\.$"},
 
+    -- Death
+    {position=const.COMBAT_POSITION.OBSERVANT, type=const.COMBAT_TYPE.DEATH, regex="^(?<defender>.+) is DE(?:AD|STROYED)!$"},
 
-const.MELEE.OBSERVANT = {}
+    -- Observant engage
+    {position=const.COMBAT_POSITION.OBSERVANT, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>.+) (?<approach>approaches|surprises) (?<defender>.+) and prepares to engage (?:him|her|it) in combat!$"},
 
-const.MELEE.OBSERVANT.MISS = {}
-const.MELEE.OBSERVANT.MISS.BASH = {"^(?<defender>.+) evades (?<offender>.+)'s crushing attack\\.$"}
-const.MELEE.OBSERVANT.MISS.PIERCE = {"^(?<defender>.+) sidesteps (?<offender>.+)'s piercing attack\\.$"}
-const.MELEE.OBSERVANT.MISS.SLASH = {"^(?<defender>.+) ducks under (?<offender>.+)'s slashing attack\\.$"}
+    -- Observant bash
+    {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>.+) evades (?<offender>.+)'s crushing attack\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<offender>.+)'s crush grazes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=2, regex="^(?<offender>.+)'s crush hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=3, regex="^(?<offender>.+)'s crush skillfully hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=4, regex="^(?<offender>.+)'s crush deftly hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=5, regex="^(?<offender>.+)'s crush violently hits (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=6, regex="^(?<offender>.+)'s crush crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=7, regex="^(?<offender>.+)'s crush skillfully crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=8, regex="^(?<offender>.+)'s crush deftly crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=9, regex="^(?<offender>.+)'s crush violently crushes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=10, regex="^With a bonecrunching sound (?<offender>.+)'s crush smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=11, regex="^With a bonecrunching sound (?<offender>.+)'s crush skillfully smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=12, regex="^With a bonecrunching sound (?<offender>.+)'s crush deftly smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=13, regex="^With a bonecrunching sound (?<offender>.+)'s crush violently smashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=14, regex="^(?<offender>.+)'s crush shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=15, regex="^(?<offender>.+)'s crush skillfully shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=16, regex="^(?<offender>.+)'s crush deftly shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=17, regex="^(?<offender>.+)'s crush violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=18, regex="^(?<offender>.+)'s crush beats (?<defender>.+) to a bloody pulp\\.$"},
 
-const.MELEE.OBSERVANT.HIT = {}
-const.MELEE.OBSERVANT.HIT.BASH = {
-    "^(?<offender>.+)'s crush grazes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush skillfully hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush deftly hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush violently hits (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush skillfully crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush deftly crushes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush violently crushes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush skillfully smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush deftly smashes (?<defender>.+)'s .+\\.$",
-    "^With a bonecrunching sound (?<offender>.+)'s crush violently smashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush skillfully shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush deftly shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s crush beats (?<defender>.+) to a bloody pulp\\.$",
-}
-const.MELEE.OBSERVANT.HIT.PIERCE = {
-    "^(?<offender>.+)'s pierce bruises (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce nicks (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce scratches (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce shallowly cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce deeply cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce shallowly penetrates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce penetrates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce deeply penetrates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce perforates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce deeply perforates (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s pierce violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce tears open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce tears wounds into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce tears a gaping wound into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce minces (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s pierce nearly bisects (?<defender>.+)'s .+\\.$",
-}
-const.MELEE.OBSERVANT.HIT.SLASH = {
-    "^(?<offender>.+)'s slash cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash skillfully cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash viciously cuts (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash viciously slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash skillfully slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash powerfully slashes (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash lays open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash deeply gashes (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash skillfully shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash deftly shreds (?<defender>.+)'s .+\\.$",
-    "^With a sickening sound (?<offender>.+)'s slash violently shreds (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash tears open (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash lacerates (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash tears a gaping wound into (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash minces (?<defender>.+)'s .+\\.$",
-    "^(?<offender>.+)'s slash nearly bisects (?<defender>.+)'s .+\\.$",
+    -- Observant pierce
+    {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<defender>.+) sidesteps (?<offender>.+)'s piercing attack\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=1, regex="^(?<offender>.+)'s pierce bruises (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=2, regex="^(?<offender>.+)'s pierce nicks (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=3, regex="^(?<offender>.+)'s pierce scratches (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=4, regex="^(?<offender>.+)'s pierce shallowly cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=5, regex="^(?<offender>.+)'s pierce cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=6, regex="^(?<offender>.+)'s pierce deeply cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=7, regex="^(?<offender>.+)'s pierce shallowly penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=8, regex="^(?<offender>.+)'s pierce penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=9, regex="^(?<offender>.+)'s pierce deeply penetrates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=10, regex="^With a sickening sound (?<offender>.+)'s pierce perforates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=11, regex="^With a sickening sound (?<offender>.+)'s pierce deeply perforates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=12, regex="^With a sickening sound (?<offender>.+)'s pierce shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=13, regex="^With a sickening sound (?<offender>.+)'s pierce violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=14, regex="^(?<offender>.+)'s pierce tears open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=15, regex="^(?<offender>.+)'s pierce tears wounds into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=16, regex="^(?<offender>.+)'s pierce tears a gaping wound into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=17, regex="^(?<offender>.+)'s pierce minces (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.PIERCE, order=18, regex="^(?<offender>.+)'s pierce nearly bisects (?<defender>.+)'s .+\\.$"},
+
+    -- Observant slash
+    {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<defender>.+) ducks under (?<offender>.+)'s slashing attack\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=1, regex="^(?<offender>.+)'s slash cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=2, regex="^(?<offender>.+)'s slash skillfully cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=3, regex="^(?<offender>.+)'s slash viciously cuts (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=4, regex="^(?<offender>.+)'s slash slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=5, regex="^(?<offender>.+)'s slash viciously slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=6, regex="^(?<offender>.+)'s slash skillfully slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=7, regex="^(?<offender>.+)'s slash powerfully slashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=8, regex="^(?<offender>.+)'s slash lays open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=9, regex="^(?<offender>.+)'s slash deeply gashes (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=10, regex="^With a sickening sound (?<offender>.+)'s slash shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=11, regex="^With a sickening sound (?<offender>.+)'s slash skillfully shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=12, regex="^With a sickening sound (?<offender>.+)'s slash deftly shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=13, regex="^With a sickening sound (?<offender>.+)'s slash violently shreds (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=14, regex="^(?<offender>.+)'s slash tears open (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=15, regex="^(?<offender>.+)'s slash lacerates (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=16, regex="^(?<offender>.+)'s slash tears a gaping wound into (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=17, regex="^(?<offender>.+)'s slash minces (?<defender>.+)'s .+\\.$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.SLASH, order=18, regex="^(?<offender>.+)'s slash nearly bisects (?<defender>.+)'s .+\\.$"},
 }
 
 
