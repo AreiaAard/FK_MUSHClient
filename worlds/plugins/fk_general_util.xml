@@ -199,6 +199,16 @@
      sequence="100"
     >
     </trigger>
+
+    <trigger
+     match="^You hear (?<crier>.+)'s death cry\.$"
+     enabled="y"
+     script="Core.death_cry"
+     omit_from_output="y"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -258,6 +268,44 @@ function Core.add_tab_completion_items()
     }
     for _, item in ipairs(items) do
         ShiftTabCompleteItem(item)
+    end
+end
+
+
+function Core.death_cry(trigger, line, wc, styles)
+    -- Conditionally gag death cry messages. We want to see them only
+    -- if the crier is not someone we (or a party member) hasn't just
+    -- killed.
+    local crier = wc.crier:lower()
+
+    -- This current line is the last line, so we need to go back two
+    -- to get the line before this one.
+    local recent = utils.split(GetRecentLines(2), utils.fromhex("0A"))
+    local previous = recent[1]
+
+    -- If the previous line is a favor message, this was our kill.
+    local favor = rex.new(
+        "^You sense that your patron approves of your actions\\.$"
+    )
+    if (favor:match(previous)) then
+        return
+    end
+
+    -- No favor, but now check for the actual death message and ensure
+    -- the names match up if found.
+    local death = rex.new("^(?<name>.+) is DE(?:AD|STROYED)!$")
+    local first, last, match = death:match(previous)
+    if (match and match.name:lower() == crier) then
+        return
+    end
+
+    -- This was not a kill we just made, so display the line.
+    for _, style in ipairs(styles) do
+        ColourNote(
+            RGBColourToName(style.textcolour),
+            RGBColourToName(style.backcolour),
+            style.text
+        )
     end
 end
 ]]>
