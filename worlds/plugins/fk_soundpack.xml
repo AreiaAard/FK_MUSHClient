@@ -84,55 +84,55 @@ function Config.default()
 
     data.events.osay = {
         desc = "OOC say in your room",
-        defaultWav = "osay.wav",
+        defaultWav = {"osay"},
         volume = 100,
         panning = 0,
     }
     data.events.otell = {
         desc = "Send/receive OOC tells",
-        defaultWav = "otell.wav",
+        defaultWav = {"otell"},
         volume = 100,
         panning = 0,
     }
     data.events.say = {
         desc = "Say and sayto in your room",
-        defaultWav = "say.wav",
+        defaultWav = {"say"},
         volume = 100,
         panning = 0,
     }
     data.events.tell = {
         desc = "Send/receive tells",
-        defaultWav = "tell.wav",
+        defaultWav = {"tell"},
         volume = 100,
         panning = 0,
     }
     data.events.yell = {
         desc = "Yells in your area",
-        defaultWav = "yell.wav",
+        defaultWav = {"yell"},
         volume = 100,
         panning = 0,
     }
     data.events.engage = {
         desc = "Combat engagements",
-        defaultWav = "engage.wav",
+        defaultWav = {"engage"},
         volume = 100,
         panning = 0,
     }
     data.events.death = {
         desc = "Other mob and PC deaths",
-        defaultWav = "death_other.wav",
+        defaultWav = {"death_other"},
         volume = 100,
         panning = 0,
     }
     data.events.improvement = {
         desc = "Skill improvements",
-        defaultWav = "improve.wav",
+        defaultWav = {"improve"},
         volume = 100,
         panning = 0,
     }
     data.events.injury = {
         desc = "Injured in combat",
-        defaultWav = "hurt#7.wav",
+        defaultWav = {"hurt#7"},
         volume = 65,
         panning = 0,
     }
@@ -227,6 +227,31 @@ function Soundpack.calculate_real_volume(volume)
 end
 
 
+function Soundpack.format_wav(str)
+    -- Append ".wav" if missing. Also, convert instances of "#" fol-
+    -- lowed by an int to a random value from 1 to that number in the
+    -- file name. Allows playing a random choice among several similar
+    -- sounds. eg, file name of "sword#5" could resolve randomly to
+    -- "sword2.wav", "sword5.wav", etc.
+    if (not str:match("%.wav$")) then
+        str = str .. ".wav"
+    end
+    return str:gsub("#(%d+)", function(d) return math.random(1, d) end)
+end
+
+
+function Soundpack.play_sound(file, volume, panning)
+    local code = PlaySound(0, file, false, volume, panning)
+    local ok = code == error_code.eOK
+    if (not ok) then
+        local msg = "Failed to play sound %s:"
+        Utility.msg_major(msg:format(file))
+        Utility.msg_minor(error_desc[code] .. ".")
+    end
+    return ok
+end
+
+
 function Soundpack.event(eventName)
     local event = Config.get_event(eventName)
     if (not event) then
@@ -240,19 +265,20 @@ function Soundpack.event(eventName)
     end
     volume = Soundpack.calculate_real_volume(volume)
 
-    local file = event.customWav
-    if (not file or file == "") then
-        file = event.defaultWav
+    local files = event.customWav
+    if (not files or #files == 0) then
+        files = event.defaultWav
     end
 
-    -- Convert # followed by an int to a random value from 1 to that
-    -- number in the file name. Allows essentially to play a random
-    -- choice among several similar sounds. eg, file name of
-    -- "sword#5.wav" would resolve randomly to "sword2.wav", or
-    -- "sword5.wav", etc.
-    file = file:gsub("#(%d+)", function(d) return math.random(1, d) end)
-
-    PlaySound(0, file, false, volume, event.panning)
+    wait.make(function()
+        for _, file in ipairs(files) do
+            file = Soundpack.format_wav(file)
+            Soundpack.play_sound(file, volume, event.panning)
+            if (event.delay and event.delay > 0) then
+                wait.time(event.delay)
+            end
+        end
+    end)
     return true
 end
 ]]>
@@ -286,6 +312,12 @@ end
 
 function Utility.msg_major(str)
     local msg = "[{B0}Soundpack{70}]: " .. str
+    fk_note(msg)
+end
+
+
+function Utility.msg_minor(str)
+    local msg = "             " .. str
     fk_note(msg)
 end
 ]]>
