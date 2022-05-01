@@ -377,27 +377,6 @@ end
 
 
 
-<triggers>
-    <trigger
-     match="^(?<offender>.+) (?<method>approach(?:es)?|surprises?) (?<defender>.+) and prepares? to engage (?:you|him|her|it) in combat!$"
-     enabled="y"
-     script="Combat.engage"
-     regexp="y"
-     sequence="100"
-    >
-    </trigger>
-
-    <trigger
-     match="^(?<offender>.+) is DE(?:AD|STROYED)!$"
-     enabled="y"
-     script="Combat.death"
-     regexp="y"
-     sequence="100"
-    >
-    </trigger>
-</triggers>
-
-
 <script>
 <![CDATA[
 --------------------------------------------------
@@ -425,8 +404,11 @@ function Combat.add_trigger(index, msg)
     local flags = trigger_flag.Enabled + trigger_flag.RegularExpression
     local color = custom_colour.NoChange
     local name = string.format("trigger_combat_%d", index)
-    local code = AddTrigger(
-        name, msg.regex, "", flags, color, 0, "", "Combat.attack"
+    local sequence = msg.position == const.COMBAT_POSITION.OBSERVANT
+        and 61 or 60
+    local code = AddTriggerEx(
+        name, msg.regex, "", flags, color, 0, "",
+        "Combat.event", sendto.script, sequence
     )
     if (code ~= error_code.eOK) then
         success = false
@@ -438,34 +420,7 @@ function Combat.add_trigger(index, msg)
 end
 
 
-function Combat.event(data)
-    local path = "combat." .. data.action
-    EventHandler.event(const.EVENT_TYPE.COMBAT, path, data)
-end
-
-
-function Combat.engage(trigger, line, wc)
-    Combat.event{
-        action = "engage",
-        offender = wc.offender,
-        defender = wc.defender,
-        surprise = wc.method:match("^surprise") and true or false,
-        line = line,
-    }
-end
-
-
-function Combat.death(trigger, line, wc)
-    Combat.event{
-        action = "death",
-        offender = "",
-        defender = wc.defender,
-        line = line,
-    }
-end
-
-
-function Combat.attack(trigger, line, wc)
+function Combat.event(trigger, line, wc)
     local index = tonumber(trigger:match("^trigger_combat_(%d+)$"))
     if (not const.COMBAT_MSG[index]) then
         return

@@ -336,9 +336,9 @@ function OnPluginBroadcast(msg, id, name, text)
             Soundpack.event(eventPath[2])
             return
         end
-        local attack = fk_event(text)
-        if (attack.success) then
-            if (attack.position == const.COMBAT_POSITION.DEFENSE) then
+        local event = fk_event(text)
+        if (event.success) then
+            if (event.position == const.COMBAT_POSITION.DEFENSE) then
                 Soundpack.event("injury")
             end
         end
