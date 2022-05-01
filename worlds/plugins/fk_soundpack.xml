@@ -90,8 +90,8 @@ function Config.default()
     }
     data.events.otell = {
         desc = "Send/receive OOC tells",
-        defaultWav = {"otell"},
-        volume = 100,
+        defaultWav = {"tell"},
+        volume = 85,
         panning = 0,
     }
     data.events.say = {
@@ -103,19 +103,19 @@ function Config.default()
     data.events.tell = {
         desc = "Send/receive tells",
         defaultWav = {"tell"},
-        volume = 100,
+        volume = 80,
         panning = 0,
     }
     data.events.yell = {
         desc = "Yells in your area",
         defaultWav = {"yell"},
-        volume = 100,
+        volume = 80,
         panning = 0,
     }
     data.events.engage = {
         desc = "Combat engagements",
         defaultWav = {"engage"},
-        volume = 100,
+        volume = 90,
         panning = 0,
     }
     data.events.death = {
@@ -135,6 +135,26 @@ function Config.default()
         defaultWav = {"hurt#7"},
         volume = 65,
         panning = 0,
+    }
+    data.events.melee_bash = {
+        desc = "Made a successful bash attack",
+        defaultWav = {"swing#5", "melee_bash"},
+        volume = 70,
+        panning = 0,
+        delay = 0.1,
+    }
+    data.events.melee_pierce = {
+        desc = "Made a successful pierce attack",
+        defaultWav = {"melee_pierce"},
+        volume = 65,
+        panning = 0,
+    }
+    data.events.melee_slash = {
+        desc = "Made a successful slash attack",
+        defaultWav = {"swing#5", "melee_slash"},
+        volume = 65,
+        panning = 0,
+        delay = 0.1,
     }
 
     return serialize.save_simple(data)
@@ -281,6 +301,24 @@ function Soundpack.event(eventName)
     end)
     return true
 end
+
+
+function Soundpack.handle_combat(event)
+    if (event.type == const.COMBAT_TYPE.MELEE and event.success) then
+        if (event.position == const.COMBAT_POSITION.DEFENSE) then
+            Soundpack.event("injury")
+        elseif (event.position == const.COMBAT_POSITION.OFFENSE) then
+            Soundpack.event("melee_" .. event.damtype)
+        end
+
+    elseif (event.type == const.COMBAT_TYPE.ENGAGE) then
+        Soundpack.event(event.type)
+
+    elseif (event.type == const.COMBAT_TYPE.DEATH) then
+        Soundpack.event(event.type)
+
+    end
+end
 ]]>
 </script>
 
@@ -356,24 +394,16 @@ function OnPluginBroadcast(msg, id, name, text)
         return
     end
 
-    local eventPath = utils.split(text, ".")
+    local path = utils.split(text, ".")
     if (msg == const.EVENT_TYPE.COMMUNICATION
     or msg == const.EVENT_TYPE.IMPROVEMENT) then
-        Soundpack.event(eventPath[2])
+        Soundpack.event(path[2])
         return
     end
 
+    local event = fk_event(text)
     if (msg == const.EVENT_TYPE.COMBAT) then
-        if (eventPath[2] == "engage" or eventPath[2] == "death") then
-            Soundpack.event(eventPath[2])
-            return
-        end
-        local event = fk_event(text)
-        if (event.success) then
-            if (event.position == const.COMBAT_POSITION.DEFENSE) then
-                Soundpack.event("injury")
-            end
-        end
+        Soundpack.handle_combat(event)
     end
 end
 ]]>
