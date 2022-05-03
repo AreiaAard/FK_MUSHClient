@@ -41,6 +41,26 @@ const.PLUGIN = {
 }
 
 
+-- Character classes.
+const.CLASS = {
+    ABJURER = "Abjurer",
+    BARD = "Bard",
+    CLERIC = "Cleric",
+    CONJURER = "Conjurer",
+    DRUID = "Druid",
+    ENCHANTER = "Enchanter",
+    EVOKER = "Evoker",
+    FIGHTER = "Fighter",
+    ILLUSIONIST = "Illusionist",
+    MAGE = "Mage",
+    NECROMANCER = "Necromancer",
+    PALADIN = "Paladin",
+    RANGER = "Ranger",
+    THIEF = "Thief",
+    TRANSMUTER = "Transmuter",
+}
+
+
 -- Combat event types.
 const.COMBAT_TYPE = {
     MELEE = "melee",
