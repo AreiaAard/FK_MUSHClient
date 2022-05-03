@@ -61,6 +61,40 @@ const.CLASS = {
 }
 
 
+-- Cleric domains.
+const.DOMAIN = {
+    CHARM = "Charm",
+    DARKNESS = "Darkness",
+    DESTRUCTION = "Destruction",
+    DROW = "Drow",
+    EARTH = "Earth",
+    ELF = "Elf",
+    FATE = "Fate",
+    FIRE = "Fire",
+    GNOME = "Gnome",
+    HALFLING = "Halfling",
+    HATRED = "Hatred",
+    ILLUSION = "Illusion",
+    KNOWLEDGE = "Knowledge",
+    MAGIC = "Magic",
+    MOON = "Moon",
+    NATURE = "Nature",
+    OCEAN = "Ocean",
+    PLANNING = "Planning",
+    PROTECTION = "Protection",
+    PROWESS = "Prowess",
+    RENEWAL = "Renewal",
+    RETRIBUTION = "Retribution",
+    STORMS = "Storms",
+    SUFFERING = "Suffering",
+    SUN = "Sun",
+    TRADE = "Trade",
+    TRAVEL = "Travel",
+    TRICKERY = "Trickery",
+    TYRANNY = "Tyranny",
+}
+
+
 -- Combat event types.
 const.COMBAT_TYPE = {
     MELEE = "melee",
