@@ -120,7 +120,7 @@ end
 
 function Spellbook:open()
     self:check_close()
-    for _, spell in ipairs(self.index) do
+    for _, spell in pairs(self.index) do
         spell:read()
     end
     self.isOpen = true
@@ -128,7 +128,7 @@ end
 
 
 function Spellbook:close()
-    for _, spell in ipairs(self.index) do
+    for _, spell in pairs(self.index) do
         spell:forget()
     end
     self.isOpen = false
@@ -142,42 +142,32 @@ function Spellbook:check_close()
 end
 
 
-function Spellbook:add(spell)
+function Spellbook:add(key, spell)
     self:check_close()
     if (getmetatable(spell) ~= Spell) then
         error("Only spells can be added to a spellbook.", 2)
     end
-    local alreadyKnown = false
-    for _, knownSpell in ipairs(self.index) do
-        if (spell == knownSpell) then
-            alreadyKnown = true
-        end
-    end
-    if (not alreadyKnown) then
-        table.insert(self.index, spell)
-        table.sort(self.index, function(e1, e2) return e1.name < e2.name end)
-    end
+    self.index[key] = spell
 end
 
 
-function Spellbook:remove(spell)
+function Spellbook:remove(key)
     self:check_close()
-    if (getmetatable(spell) ~= Spell) then
-        error("Only spells can be removed from a spellbook.", 2)
-    end
-    for i, knownSpell in ipairs(self.index) do
-        if (spell == knownSpell) then
-            table.remove(self.index, i)
-        end
-    end
+    self.index[key] = nil
 end
 
 
 function Spellbook:print()
-    for _, spell in ipairs(self.index) do
-        local msg = "%s (%s)"
+    local keys = {}
+    for key in pairs(self.index) do
+        table.insert(keys, key)
+    end
+    table.sort(keys)
+    local line = "%s (%s)"
+    for _, key in ipairs(keys) do
+        local spell = self.index[key]
         local available = spell:is_available() and "y" or "n"
-        print(msg:format(spell.name, available))
+        print(line:format(spell.name, available))
     end
 end
 
