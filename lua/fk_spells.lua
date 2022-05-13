@@ -157,6 +157,16 @@ function Spellbook:remove(key)
 end
 
 
+function Spellbook:extend(spellbook)
+    if (getmetatable(spellbook) ~= Spellbook) then
+        error("Only a spellbook can extend a spellbook.", 2)
+    end
+    for key, spell in pairs(spellbook.index) do
+        self:add(key, spell)
+    end
+end
+
+
 function Spellbook:print()
     local keys = {}
     for key in pairs(self.index) do
@@ -169,6 +179,53 @@ function Spellbook:print()
         local available = spell:is_available() and "y" or "n"
         print(line:format(spell.name, available))
     end
+end
+
+
+
+--------------------------------------------------
+-- Spellbook loading
+--------------------------------------------------
+
+function load_spellbook(filter)
+    local spellbook = Spellbook:new{}
+    for key, spell in pairs(spells) do
+        if (filter(spell, key)) then
+            spellbook:add(key, spell)
+        end
+    end
+    return spellbook
+end
+
+
+function load_class_spellbook(class)
+    if (not class) then
+        error("Invalid character class.", 2)
+    end
+    return load_spellbook(function(spell) return spell.levels[class] end)
+end
+
+
+function load_domain_spellbook(domain1, domain2)
+    if not (domain1 and domain2) then
+        error("Invalid clerical domain.", 2)
+    end
+    return load_spellbook(function(spell)
+        return spell.levels[domain1] or spell.levels[domain2]
+    end)
+end
+
+
+function load_specialist_spellbook(forbiddenSpheres)
+    return load_spellbook(function(spell)
+        if (not spell.levels[const.CLASS.MAGE]) then
+            return false
+        end
+        for _, forbidden in ipairs(forbiddenSpheres) do
+            if (forbidden == spell.sphere) then return false end
+        end
+        return true
+    end)
 end
 
 
