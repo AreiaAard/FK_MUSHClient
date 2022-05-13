@@ -33,7 +33,8 @@ function Spell:new(obj)
 
     obj.id = GetUniqueID()
     obj.aliasName = self:_format_alias_name(obj.name, obj.id)
-    obj.aliasMatch = obj.incantation or self:_format_alias_match(obj.phrase)
+    obj.aliasMatch = obj.incantation
+        or self:_format_alias_match(obj.phrase, obj.noarg)
     obj.response = obj.response or self:_format_alias_response(obj.name)
     obj.response = trim(obj.response)
     return obj
@@ -46,8 +47,10 @@ function Spell:_format_alias_name(name, id)
 end
 
 
-function Spell:_format_alias_match(phrase)
-    return string.format("^%s(?<args> +.*)?$", phrase)
+function Spell:_format_alias_match(phrase, noarg)
+    local argCapture = "(?<args> +.*)?"
+    local match = "^%s%s$"
+    return match:format(phrase, noarg and "" or argCapture)
 end
 
 
