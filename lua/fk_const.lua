@@ -95,6 +95,19 @@ const.DOMAIN = {
 }
 
 
+-- Spell spheres.
+const.SPELL_SPHERE = {
+    ABJURATION = "Abjuration",
+    CONJURATION = "Conjuration",
+    DIVINATION = "Divination",
+    ENCHANTMENT = "Enchantment",
+    EVOCATION = "Evocation",
+    ILLUSION = "Illusion",
+    NECROMANCY = "Necromancy",
+    TRANSMUTATION = "Transmutation",
+}
+
+
 -- Combat event types.
 const.COMBAT_TYPE = {
     MELEE = "melee",
