@@ -18,7 +18,13 @@ function Spell:new(obj)
     if (not obj.name) then
         error("No spell name given.", 2)
     end
-    if not (obj.incantation or obj.phrase) then
+    if (not obj.sphere) then
+        error("No spell sphere given.", 2)
+    end
+    if not (obj.levels and next(obj.levels)) then
+        error("No spell levels given.", 2)
+    end
+    if not (obj.phrase) then
         error("No spell match pattern given.", 2)
     end
 
