@@ -53,7 +53,7 @@
     </alias>
 
     <alias
-     match="^&cmdPrefix; +create +(?<character>\w+)$"
+     match="^&cmdPrefix; +create$"
      enabled="y"
      script="Manager.create_new_profile"
      regexp="y"
@@ -153,13 +153,60 @@ function Manager.unload_single(plugin)
 end
 
 
-function Manager.create_new_profile(alias, line, wc)
-    local character = Utility.pascal_case(wc.character)
-    if (Utility.get_character_plugin(character)) then
+function Manager._new_profile_abort()
+    Utility.msg_major("Profile creation aborted.")
+    return false
+end
+
+
+function Manager._new_profile_name()
+    local name = utils.inputbox(
+        "Enter the character's name.",
+    "Profile Creation - Name", nil, nil, nil,
+        {validate=function(s) return trim(s):match("^%w+$") end}
+    )
+    return name and Utility.pascal_case(trim(name)) or name
+end
+
+
+function Manager.profile_exists(name)
+    if (Utility.get_character_plugin(name)) then
         local msg = "A character profile for %s already exists."
-        Utility.msg_major(msg:format(character))
-        return
+        Utility.msg_major(msg:format(name))
+        return true
     end
+    return false
+end
+
+
+function Manager._new_profile_class(name)
+    return utils.choose(
+        string.format("Select %s's class.", name),
+        "Profile Creation - Class", const.CLASS
+    )
+end
+
+
+function Manager._new_profile_domains()
+    local domains = {}
+    repeat
+        domains = {}
+        local selections = utils.multilistbox(
+            "Select two clerical domains.",
+            "Profile Creation - Domains", const.DOMAIN
+        )
+        if (not selections) then
+            return
+        end
+        for domain in pairs(selections) do
+            table.insert(domains, domain)
+        end
+    until (#domains == 2)
+    return domains
+end
+
+
+function Manager.get_profile_template()
     local templatePath = Manager.DIRECTORY .. "template.txt"
     local template, errorMsg = io.open(templatePath, "r")
     if (not template) then
@@ -171,31 +218,96 @@ function Manager.create_new_profile(alias, line, wc)
     end
     local text = template:read("*a")
     template:close()
+    return text
+end
 
+
+function Manager.format_profile_template(data)
+    local text = Manager.get_profile_template()
+    if (not text) then
+        return
+    end
+
+    local domainSection = ""
+    if (#data.domains > 0) then
+        local domainConst = {}
+        for _, domain in ipairs(data.domains) do
+            table.insert(domainConst, "const.DOMAIN." .. domain)
+        end
+        table.sort(domainConst)
+        local lines = {}
+        lines[1] = string.format(
+            "\ndomains = {%s}", table.concat(domainConst, ", ")
+        )
+        lines[2] = "\nspellbook:extend(load_domain_spellbook(domains[1], domains[2]))"
+        lines[3] = "spellbook:open()\n\n"
+        domainSection = table.concat(lines, "\n")
+    end
+
+    text = text:gsub("{{characterName}}", data.name)
+        :gsub("{{id}}", data.id)
+        :gsub("{{timestamp}}", data.timestamp)
+        :gsub("{{class}}", data.class)
+        :gsub("{{domains}}", domainSection)
+    return text
+end
+
+
+function Manager.write_new_profile(data)
     local date = os.date("*t")
-    local timestamp = "%04d-%02d-%02d %02d:%02d:%02d"
-    timestamp = timestamp:format(
+    data.timestamp = string.format(
+        "%04d-%02d-%02d %02d:%02d:%02d",
         date.year, date.month, date.day, date.hour, date.min, date.sec
     )
-    local id = GetUniqueID()
-    text = text:gsub("{{characterName}}", character)
-    text = text:gsub("{{id}}", id)
-    text = text:gsub("{{timestamp}}", timestamp)
-
-    local filename = string.format("fk_character_%s.xml", character:lower())
+    data.id = GetUniqueID()
+    local profileText = Manager.format_profile_template(data)
+    if (not profileText) then
+        return false
+    end
+    local filename = string.format("fk_character_%s.xml", data.name:lower())
     local profile, errorMsg = io.open(Manager.DIRECTORY .. filename, "w")
-    if (not template) then
+    if (not profile) then
         Utility.msg_major("Failed to write new character profile.")
         if (errorMsg) then
             Utility.msg_minor(errorMsg)
         end
-        return
+        return false
     end
-    profile:write(text)
+    profile:write(profileText)
     profile:close()
+    return true
+end
+
+
+function Manager.create_new_profile(alias, line, wc)
+    local name = Manager._new_profile_name()
+    if (not name) then
+        return Manager._new_profile_abort()
+    end
+    if (Manager.profile_exists(name)) then
+        return Manager._new_profile_abort()
+    end
+    local class = Manager._new_profile_class(name)
+    if (not class) then
+        return Manager._new_profile_abort()
+    end
+    local domains = const.CLASS[class] ~= const.CLASS.CLERIC
+        and {} or Manager._new_profile_domains()
+    if (not domains) then
+        return Manager._new_profile_abort()
+    end
+
+    local profileData = {
+        name=name, class=class:lower(),
+        domains=domains,
+    }
+    if (not Manager.write_new_profile(profileData)) then
+        return Manager._new_profile_abort()
+    end
 
     local msg = "Created new character profile for %s."
-    Utility.msg_major(msg:format(character))
+    Utility.msg_major(msg:format(name))
+    return true
 end
 ]]>
 </script>

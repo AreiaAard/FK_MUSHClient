@@ -8,7 +8,7 @@
     id="{{id}}"
     language="Lua"
     purpose="Character profile for {{characterName}}"
-    save_state="n"
+    save_state="y"
     date_written="{{timestamp}}"
     requires="5.06"
     version="0.00"
@@ -26,10 +26,11 @@
 
 <script>
 <![CDATA[
-]]>
 require("fk_character_config")
+require("fk_class_{{class}}")
 
-
+{{domains}}
+]]>
 </script>
 
 
