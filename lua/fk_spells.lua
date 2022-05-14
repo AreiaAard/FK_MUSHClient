@@ -106,6 +106,19 @@ end
 --------------------------------------------------
 
 Spellbook = {}
+Spellbook.generalAliases = {
+    {
+        name="alias_stop_" .. GetUniqueID(),
+        match="^x$",
+        response="stop"
+    }, {
+        name="alias_spellbook_list_" .. GetUniqueID(),
+        match="^fksb +li?st?(?: +(?<spell>.+))?$",
+        script="list_spellbook"
+    },
+}
+Spellbook.aliasFlags = alias_flag.Enabled + alias_flag.RegularExpression
+    + alias_flag.IgnoreAliasCase
 
 
 function Spellbook:new(spells)
@@ -123,6 +136,18 @@ function Spellbook:open()
     for _, spell in pairs(self.index) do
         spell:read()
     end
+    for _, alias in ipairs(self.generalAliases) do
+        local code = AddAlias(
+            alias.name, alias.match, alias.response or "",
+            self.aliasFlags, alias.script
+        )
+        if (code ~= error_code.eOK) then
+            local msg = "Failed to add alias %s:\n    %s."
+            print(msg:format(alias.name, error_desc[code]))
+        elseif (alias.sendto) then
+            SetAliasOption(alias.name, "send_to", alias.sendto)
+        end
+    end
     self.isOpen = true
 end
 
@@ -130,6 +155,13 @@ end
 function Spellbook:close()
     for _, spell in pairs(self.index) do
         spell:forget()
+    end
+    for _, alias in ipairs(self.generalAliases) do
+        local code = DeleteAlias(alias.name)
+        if (code ~= error_code.eOK) then
+            local msg = "Failed to remove alias %s:\n    %s."
+            print(msg:format(alias.name, error_desc[code]))
+        end
     end
     self.isOpen = false
 end
@@ -173,7 +205,7 @@ function Spellbook:print()
         table.insert(keys, key)
     end
     table.sort(keys)
-    local line = "%s (%s)"
+    local line = "%-15.15s (%s)"
     for _, key in ipairs(keys) do
         local spell = self.index[key]
         local available = spell:is_available() and "y" or "n"
@@ -226,6 +258,34 @@ function load_specialist_spellbook(forbiddenSpheres)
         end
         return true
     end)
+end
+
+
+function list_spellbook(alias, line, wc)
+    -- Make sure a global spellbook is instantiated.
+    if (not spellbook) then
+        print("No spellbook available.")
+        return
+    end
+    local spellName = trim(wc.spell:lower():gsub("'", ""))
+    if (spellName == "") then
+        spellbook:print()
+        return
+    end
+    local results = {}
+    for key, spell in pairs(spellbook.index) do
+        if (spell.name:match("^" .. spellName)) then
+            table.insert(results, spell)
+        end
+    end
+    local count = #results
+    table.sort(results, function(s1, s2) return s1.name < s2.name end)
+    local msg = "You have %d spell%s like this in your spellbook."
+    print(msg:format(count, count == 1 and "" or "s"))
+    msg = "%-20.20s: %s"
+    for _, spell in ipairs(results) do
+        print(msg:format(spell.name, spell.aliasMatch))
+    end
 end
 
 
