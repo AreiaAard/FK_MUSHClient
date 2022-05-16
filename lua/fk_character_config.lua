@@ -83,15 +83,17 @@ Combatmode.INITIAL = {
     C = "cast",
     D = "defensive",
     E = "empower",
+    F = "quicken",
     H = "heighten",
     L = "enlarge",
-    M = "Maximize",
+    M = "maximize",
     P = "power",
-    Q = "quicken",
+    Q = "silent",
     R = "ranged",
-    S = "search",
+    S = "still",
     T = "twin",
     X = "extend",
+    Z = "search",
 }
 
 
