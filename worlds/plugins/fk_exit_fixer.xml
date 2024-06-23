@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+    name="FK_Exit_Fixer"
+    author="Areia"
+    id="374f52abac4b2ea6417e94ac"
+    language="Lua"
+    purpose="Fix room exit display"
+    save_state="y"
+    date_written="2024-06-22 22:00:00"
+    requires="5.06"
+    version="0.00"
+>
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+<aliases>
+  <alias
+   match="^ *exits +(?<setting>on|off) *$"
+   enabled="y"
+   script="set_show_exits"
+   regexp="y"
+   ignore_case="y"
+   sequence="100"
+  >
+  </alias>
+</aliases>
+
+
+<triggers>
+  <trigger
+   match="^(?:(?: N| E| S| W| U| D|NE|SE|SW|NW)-.+?)+$"
+   enabled="y"
+   regexp="y"
+   omit_from_output="y"
+   script="receive_exits"
+   sequence="100"
+  >
+  </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+require("commas")
+require("rex")
+require("var")
+
+
+local show_exits = nil
+local re_single_exit = rex.new[[(?<dir>N|E|S|W|U|D|NE|SE|SW|NW)-(?<name>.{1,15})]]
+
+local dirs = {
+    N = "North",
+    NE = "Northeast",
+    E = "East",
+    SE = "Southeast",
+    S = "South",
+    SW = "Southwest",
+    W = "West",
+    NW = "Northwest",
+    U = "Up",
+    D = "Down",
+}
+
+
+function set_show_exits(alias, line, wc)
+    local setting = wc.setting:lower()
+    show_exits = setting == "on" and true or false
+    var.show_exits = show_exits
+    local msg = ("Exits turned %s."):format(setting)
+    Note(msg)
+end
+
+
+function extract_exits(line)
+    local exits = {}
+    re_single_exit:gmatch(line, function(m, t)
+        local short_dir = trim(t.dir or "")
+        local name = trim(t.name or "")
+        if short_dir ~= "" then
+            local long_dir = dirs[short_dir] or short_dir
+            local exit = {dir = long_dir, name = name}
+            table.insert(exits, exit)
+        end
+    end)
+    return exits
+end
+
+
+function display_exits(count, exits)
+    local exit_format = "%s: %s"
+    for i = 1, count - 1 do
+        local exit = exits[i]
+        local exit_string = exit_format:format(exit.dir, exit.name)
+        ColourTell("silver", "black", exit_string)
+        ColourTell("", "", ", ")
+    end
+    local last = exits[count]
+    local last_string = exit_format:format(last.dir, last.name)
+    ColourNote("silver", "black", last_string)
+end
+
+
+function receive_exits(trigger, line, wc)
+    local exits = extract_exits(line)
+    local count = #exits
+    if count == 0 then
+        return
+    end
+    if show_exits then
+        display_exits(count, exits)
+    end
+end
+
+
+function initialize()
+    local show = var.show_exits
+    if show == nil then
+        -- Default to showing exits.
+        show_exits = true
+    else
+        show_exits = show == "true" and true or false
+    end
+end
+
+
+function OnPluginConnect()
+    initialize()
+end
+
+
+function OnPluginEnable()
+    if IsConnected() then
+        OnPluginConnect()
+    end
+end
+
+
+function OnPluginInstall()
+    OnPluginEnable()
+end
+]]>
+</script>
+
+
+</muclient>
