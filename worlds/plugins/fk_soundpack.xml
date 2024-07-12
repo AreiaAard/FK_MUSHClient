@@ -136,6 +136,12 @@ function Config.default()
         volume = 65,
         panning = 0,
     }
+    data.events.melee_backstab = {
+        desc = "Made a successful backstab attack",
+        defaultWav = {"melee_backstab"},
+        volume = 70,
+        panning = 0,
+    }
     data.events.melee_bash = {
         desc = "Made a successful bash attack",
         defaultWav = {"swing#5", "melee_bash"},

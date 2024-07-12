@@ -55,6 +55,7 @@ const.COMBAT_TYPE = {
 -- Damage types.
 const.DAMTYPE = {
     ACID = "acid",
+    BACKSTAB = "backstab",
     BASH = "bash",
     BITE = "bite",
     BREATH = "breath",
@@ -122,6 +123,17 @@ const.COMBAT_MSG = {
     -- Offense engage
     {position=const.COMBAT_POSITION.OFFENSE, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>You) (?<approach>approach|surprise) (?<defender>.+) and prepare to engage (?:him|her|it) in combat!$"},
 
+    -- Offense skill
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.SKILL, damtype=const.DAMTYPE.VARIANT, name="opportunist", regex="^As .+ hits their target, (?<offender>you) take the opportunity to strike!$"},
+
+    -- Offense backstab
+    {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=1, regex="^(?<defender>.+) quickly turns to avoid (?<offender>you)r sneak attack!$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=2, regex="^(?<defender>.+) quickly avoids your attempt to flank \\w+ and turns to face (?<offender>you)!$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=1, regex="^(?<defender>.+) makes a strange sound as (?<offender>you) land a sneak attack with .+!$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=2, regex="^(?<offender>You) circle around (?<defender>.+) and attack \\w+ while \\w+ is distracted!$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=3, regex="^(?<defender>.+) is suddenly very silent as (?<offender>you) land .+ in a critical spot\\.$"},
+    {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=4, regex="^(?<defender>.+) goes down as (?<offender>you)r attack on \\w+ inflicts a fatal wound\\.$"},
+
     -- Offense bash
     {position=const.COMBAT_POSITION.OFFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>.+) evades (?<offender>you)r crushing attack\\.$"},
     {position=const.COMBAT_POSITION.OFFENSE, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<offender>You)r crush grazes (?<defender>.+)'s .+\\.$"},
@@ -187,6 +199,9 @@ const.COMBAT_MSG = {
 
     -- Defense engage
     {position=const.COMBAT_POSITION.DEFENSE, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>.+) (?<approach>approaches|surprises) (?<defender>you) and prepares to engage you in combat!$"},
+
+    -- Defense skill
+    {position=const.COMBAT_POSITION.DEFENSE, success=true, type=const.COMBAT_TYPE.SKILL, damtype=const.DAMTYPE.VARIANT, name="uncanny", regex="^(?<defender>You)r uncanny reflexes sense an incoming attack from (?<offender>.+)!$"},
 
     -- Defense bash
     {position=const.COMBAT_POSITION.DEFENSE, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>You) evade (?<offender>.+)'s crushing attack\\.$"},
@@ -256,6 +271,17 @@ const.COMBAT_MSG = {
 
     -- Observant engage
     {position=const.COMBAT_POSITION.OBSERVANT, type=const.COMBAT_TYPE.ENGAGE, regex="^(?<offender>.+) (?<approach>approaches|surprises) (?<defender>.+) and prepares to engage (?:him|her|it) in combat!$"},
+
+    -- Observant skill
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.SKILL, damtype=const.DAMTYPE.VARIANT, name="uncanny", regex="^(?<defender>.+) somehow senses that (?<offender>.+) is about to attack \\w+!$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.SKILL, damtype=const.DAMTYPE.VARIANT, name="opportunist", regex="^(?<offender>.+) attempts an opportunistic strike on (?<defender>.+)!$"},
+
+    -- Observant backstab
+    {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=1, regex="^(?<offender>.+) tries to sneak attack (?<defender>.+) but misses!$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=2, regex="^(?<offender>.+) tries to circle \\w+ victim but (?<defender>.+) turns to face \\w+!$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=1, regex="^(?<defender>.+) makes a strange sound as (?<offender>.+) lands a sneak attack with .+!$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=2, regex="^(?<offender>.+) circles around (?<defender>.+) and attacks \\w+ whilst \\w+ attention is elsewhere!$"},
+    {position=const.COMBAT_POSITION.OBSERVANT, success=true, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BACKSTAB, order=3, regex="^(?<offender>.+) sneak attacks (?<defender>.+), leaving a corpse\\.$"},
 
     -- Observant bash
     {position=const.COMBAT_POSITION.OBSERVANT, success=false, type=const.COMBAT_TYPE.MELEE, damtype=const.DAMTYPE.BASH, order=1, regex="^(?<defender>.+) evades (?<offender>.+)'s crushing attack\\.$"},
