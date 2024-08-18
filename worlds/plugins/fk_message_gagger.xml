@@ -1,0 +1,841 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="FK_Message_Gagger"
+   author="Areia"
+   id="98bd568f0d8a860acccd0db2"
+   language="Lua"
+   purpose="Gag MUD output"
+   save_state="n"
+   date_written="2021-03-01 14:00:00"
+   requires="5.06"
+   version="0.00"
+   >
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+
+<script>
+<![CDATA[
+require "commas"
+require "copytable"
+require "json"
+require "var"
+
+local const = require("fk_const")
+local colors = require("fk_colors")
+require("fk_note")
+local fk_util = require("fk_util")
+
+
+
+--------------------------------------------------
+-- Omit
+--------------------------------------------------
+
+Omit = {}
+
+function Omit.initialize()
+    AddAlias("alias_omit_restore_default",
+        "^fkmg\\s+restoredefault(?:\\s+(?<confirm>\\w+))?$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.restore_default"
+    )
+    
+    AddAlias("alias_omit_display_count",
+        "^fkmg\\s+count$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.display_count"
+    )
+    AddAlias("alias_omit_display_group_list",
+        "^fkmg\\s+show$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.display_group_list"
+    )
+    AddAlias("alias_omit_display_group",
+        "^fkmg\\s+show\\s+(?<group>\\w+)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.display_group"
+    )
+    AddAlias("alias_omit_display_message",
+        "^fkmg\\s+show\\s+(?<group>\\w+)\\s+(?<message>\\w+)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.display_message"
+    )
+    
+    AddAlias("alias_omit_toggle_group_list",
+        "^fkmg\\s+(?<enable>en|dis)able$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.toggle_group_list"
+    )
+    AddAlias("alias_omit_toggle_group",
+        "^fkmg\\s+(?<enable>en|dis)able\\s+(?<group>\\w+)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.toggle_group"
+    )
+    AddAlias("alias_omit_toggle_message",
+        "^fkmg\\s+(?<enable>en|dis)able\\s+(?<group>\\w+)\\s+(?<message>\\w+)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.toggle_message"
+    )
+    
+    AddAlias("alias_omit_add_message",
+        "^fkmg\\s+add\\s+(?<group>\\w+)\\s+(?<message>\\w+)\\s+(?<match>.+?)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.add_message"
+    )
+    -- A few quick and dirty error-handling aliases for the above
+    AddAlias("alias_omit_add_message_no_group_name",
+        "^fkmg\\s+add$",
+        "Utility.plugin_message('You must specify the group to which the message will belong.')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    AddAlias("alias_omit_add_message_no_message_name",
+        "^fkmg\\s+add\\s+(?<group>\\w+)$",
+        "Utility.plugin_message('You must give this message a name.')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    AddAlias("alias_omit_add_message_no_match_string",
+        "^fkmg\\s+add\\s+(?<group>\\w+)\\s+(?<message>\\w+)$",
+        "Utility.plugin_message('You must specify a regular expression to match on.')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    for _, suffix in ipairs{"group_name", "message_name", "match_string"} do
+        SetAliasOption("alias_omit_add_message_no_" .. suffix, "send_to", sendto.script)
+    end
+    
+    AddAlias("alias_omit_edit_message",
+        "^fkmg\\s+edit\\s+(?<group>\\w+)\\s+(?<message>\\w+)\\s+(?<field>\\w+)\\s+(?<value>.+?)$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.edit_message"
+    )
+    -- A few quick and dirty error-handling aliases for the above
+    AddAlias("alias_omit_edit_message_no_group_name",
+        "^fkmg\\s+edit$",
+        "Utility.plugin_message('You must specify the group to which the message belongs.')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    AddAlias("alias_omit_edit_message_no_message_name",
+        "^fkmg\\s+edit\\s+(?<group>\\w+)$",
+        "Utility.plugin_message('Edit which message?')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    AddAlias("alias_omit_edit_message_no_field",
+        "^fkmg\\s+edit\\s+(?<group>\\w+)\\s+(?<message>\\w+)$",
+        "Utility.plugin_message('Edit which field? Options are {B0}name{70}, {B0}group{70}, and {B0}match{70}.')",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    AddAlias("alias_omit_edit_message_no_value",
+        "^fkmg\\s+edit\\s+(?<group>\\w+)\\s+(?<message>\\w+)\\s+(?<field>\\w+)$",
+        [[
+            local field = string.lower("%<field>")
+            local valueType = field == "name" and "message name" or field == "group" and "group name" or field == "match" and "regular expression" or "value"
+            Utility.plugin_message(string.format("You must specify a new %s to be assigned to this message.", valueType))
+        ]],
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary
+    )
+    for _, suffix in ipairs{"group_name", "message_name", "field", "value"} do
+        SetAliasOption("alias_omit_edit_message_no_" .. suffix, "send_to", sendto.script)
+    end
+    
+    AddAlias("alias_omit_remove",
+        "^fkmg\\s+remove(?<args>\\s+.*?)?$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Omit.remove"
+    )
+    
+    if (var.groups) then
+        Omit.groups = json.decode(var.groups)
+    else
+        Omit.set_default_groups()
+    end
+    Omit.add_triggers()
+    Omit.display_count()
+end
+
+function Omit.add_triggers()
+    Omit.delete_triggers()
+    for groupName, groupInfo in pairs(Omit.groups) do
+        if (groupInfo.enabled) then
+            for messageName, messageInfo in pairs(groupInfo.messages) do
+                if (messageInfo.enabled) then
+                    local triggerName = string.format("trigger_omit_%s_%s", groupName, messageName)
+                    AddTriggerEx(triggerName, messageInfo.match, "",
+                        trigger_flag.Enabled + trigger_flag.OmitFromOutput + trigger_flag.KeepEvaluating + trigger_flag.RegularExpression + trigger_flag.Temporary,
+                        custom_colour.NoChange, 0, "", "", sendto.world, 50
+                    )
+                    SetTriggerOption(triggerName, "group", string.format("trigger_group_omit_%s", groupName))
+                end
+            end
+        end
+    end
+end
+
+function Omit.delete_triggers()
+    local triggers = GetTriggerList()
+    if (triggers) then
+        for i = 1, #triggers do
+            EnableTrigger(triggers[i], false)
+            DeleteTrigger(triggers[i])
+        end
+    end
+end
+
+function Omit.save()
+    var.groups = json.encode(Omit.groups)
+end
+
+function Omit.set_default_groups()
+    local NAMED_CAPTURE = "%(%?%<%a%afender%>(.-)%)"
+    local groups = {}
+
+    local meleeFilter = function(msg, i)
+        return msg.type == const.COMBAT_TYPE.MELEE
+            or msg.type == const.COMBAT_TYPE.SKILL
+    end
+    local melee = fk_util.combat_messages(meleeFilter)
+    for i, message in pairs(melee) do
+        local group = "combat_%.3s_%s"
+        group = group:format(
+            message.position, message.success and "hit" or "miss"
+        )
+        local name = message.name or (message.damtype .. message.order)
+        -- Remove captures from the regexes, since this plugin does
+        -- nothing with any of them. (Does this make a difference?)
+        local regex = message.regex:gsub(NAMED_CAPTURE, "%1")
+        groups[group] = groups[group] or {enabled=true, messages={}}
+        groups[group].messages[name] = {enabled=true, match=regex}
+    end
+
+    groups.combat_dam = {enabled=true, messages={}}
+    local damageFilter = function(msg, i)
+        return msg.type == const.COMBAT_TYPE.DAMAGE
+    end
+    local damage = fk_util.combat_messages(damageFilter)
+    for i, message in pairs(damage) do
+        local name = "dam" .. message.order
+        -- Disable damage 16-17 (stunned and mortally wounded).
+        local enabled = message.order <= 15
+        local regex = message.regex:gsub(NAMED_CAPTURE, "%1")
+        groups.combat_dam.messages[name] = {enabled=enabled, match=regex}
+    end
+
+    groups.combat_off_hit.messages.crit = {
+        enabled = true,
+        match = "^You score a critical hit!$",
+    }
+
+    groups.loot = {enabled=true}
+    groups.loot.messages = {
+        my_coins = {
+            enabled = true,
+            match = "^You get (?:\\d+|a) (?:copper|silver|electrum|gold|platinum) coins? from the corpse of .+\\.$",
+        },
+        others_coins = {
+            enabled = true,
+            match = "^.+ gets (?:\\d+|a) (?:copper|silver|electrum|gold|platinum) coins? from the corpse of .+\\.$",
+        },
+    }
+
+    Omit.groups = groups
+    Omit.save()
+end
+
+function Omit.restore_default(alias, line, wc)
+    if (wc.confirm:lower() ~= "confirm") then
+        Utility.plugin_message("Are you sure you want to restore default settings? This will delete any messages you have added.")
+        Utility.print("                 Enter {B0}fkmg restoredefault confirm {70}to continue.")
+        return
+    end
+    Omit.set_default_groups()
+    Omit.add_triggers()
+    Utility.plugin_message("Plugin has been restored to default settings.")
+    Omit.display_count()
+end
+
+function Omit.display_count()
+    local numGroups = 0
+    local numMessages = 0
+    for groupName, groupInfo in pairs(Omit.groups) do
+        if (groupInfo.enabled) then
+            numGroups = numGroups + 1
+            for messageName, messageInfo in pairs(groupInfo.messages) do
+                if (messageInfo.enabled) then
+                    numMessages = numMessages + 1
+                end
+            end
+        end
+    end
+    
+    if (numMessages == 0) then
+        Utility.plugin_message("Currently gagging no messages.")
+        return
+    end
+    local str = "Currently gagging %s message%s in %s group%s."
+    Utility.plugin_message(str:format(numMessages, numMessages == 1 and "" or "s",
+        numGroups, numGroups == 1 and "" or "s"
+    ))
+end
+
+function Omit.display_group_list(alias, line, wc)
+    local groups = {}
+    for groupName, groupInfo in pairs(Omit.groups) do
+        table.insert(groups, {name=groupName, enabled=groupInfo.enabled})
+    end
+    table.sort(groups, function(e1, e2) return e1.name < e2.name end)
+    
+    local tableHorizontalSeperator = string.format("+-%s-+---+-%s-+---+", string.rep("-", 25), string.rep("-", 25))
+    local tableHeaders = string.format("| {F0}%-25.25s {70}|   | {F0}%-25.25s {70}|   |", "Group Name", "Group name")
+    local tableEntry = "| {B0}%-25.25s {70}| %s%-1.1s {70}| {B0}%-25.25s {70}| %s%-1.1s {70}|"
+    Utility.print(tableHorizontalSeperator)
+    Utility.print(tableHeaders)
+    Utility.print(tableHorizontalSeperator)
+    for i = 1, #groups, 2 do
+        local column1, column2 = groups[i] or {}, groups[i + 1] or {}
+        Utility.print(tableEntry:format(
+            column1.name or "", column1.enabled and "{A0}" or "{90}",
+            column1.enabled == true and "y" or column1.enabled == false and "n" or "",
+            column2.name or "", column2.enabled and "{A0}" or "{90}",
+            column2.enabled == true and "y" or column2.enabled == false and "n" or ""
+        ))
+    end
+    Utility.print(tableHorizontalSeperator)
+end
+
+function Omit.display_group(alias, line, wc)
+    local group = wc.group:lower()
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    
+    local messages = {}
+    for messageName, messageInfo in pairs(Omit.groups[group].messages) do
+        table.insert(messages, {name=messageName, enabled=messageInfo.enabled, match=Translate.useRegex and messageInfo.match or Translate.regex_to_plain(messageInfo.match)})
+    end
+    table.sort(messages, function(e1, e2) return e1.name < e2.name end)
+    
+    local groupNameHeader = string.format("{F0}%s {70}(%sabled{70})", group:upper(), Omit.groups[group].enabled and "{A0}en" or "{90}dis")
+    local tableHorizontalSeperator = string.format("+-%s-+---+-%s-+", string.rep("-", 20), string.rep("-", 49))
+    local tableHeader = string.format("| {F0}%-20.20s {70}|   | {F0}%-49.49s |", "Message Name", "Match String")
+    local tableEntry = "| {B0}%-20.20s {70}| %s%-1.1s {70}| %-49.49s |"
+    -- This line prints the main group name header centered
+    Utility.print(string.format("%s%s", string.rep(" ", math.floor((80 - #colors.strip(groupNameHeader)) / 2)), groupNameHeader))
+    Utility.print(tableHorizontalSeperator)
+    Utility.print(tableHeader)
+    Utility.print(tableHorizontalSeperator)
+    for i, messageInfo in ipairs(messages) do
+        Utility.print(tableEntry:format(
+            messageInfo.name, messageInfo.enabled and "{A0}" or "{90}",
+            messageInfo.enabled and "y" or "n", messageInfo.match
+        ))
+    end
+    Utility.print(tableHorizontalSeperator)
+end
+
+function Omit.display_message(alias, line, wc)
+    local group = wc.group:lower()
+    local message = wc.message:lower()
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    if (not Omit.groups[group].messages[message]) then
+        Utility.plugin_message(string.format("No message named %s exists in the %s group.", message, group))
+        Utility.print(string.format("                 Enter {B0}fkmg show %s {70}to view the list of messages in that group.", group))
+        return
+    end
+    Utility.print(string.format("{B0}Message Name{70}: %s", message))
+    Utility.print(string.format("{B0}Group{70}: %s", group))
+    Utility.print(string.format("{B0}Match Text{70}: %s", Translate.useRegex and Omit.groups[group].messages[message].match or Translate.regex_to_plain(Omit.groups[group].messages[message].match)))
+    Utility.print(string.format("{B0}Enabled{70}: %s", Omit.groups[group].messages[message].enabled and "yes" or "no"))
+end
+
+function Omit.toggle_group_list(alias, line, wc)
+    local enable = wc.enable:lower() == "en" and true or false
+    for groupName, groupInfo in pairs(Omit.groups) do
+        groupInfo.enabled = enable
+    end
+    Omit.save()
+    Omit.add_triggers()
+    Utility.plugin_message(string.format("All groups %sabled.", wc.enable:lower()))
+    Omit.display_count()
+end
+
+function Omit.toggle_group(alias, line, wc)
+    local enable = wc.enable:lower() == "en" and true or false
+    local group = wc.group:lower()
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    Omit.groups[group].enabled = enable
+    Omit.save()
+    Omit.add_triggers()
+    Utility.plugin_message(string.format("The %s group is now %sabled.", group, wc.enable:lower()))
+    Omit.display_count()
+end
+
+function Omit.toggle_message(alias, line, wc)
+    local enable = wc.enable:lower() == "en" and true or false
+    local group = wc.group:lower()
+    local message = wc.message:lower()
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    if (not Omit.groups[group].messages[message]) then
+        Utility.plugin_message(string.format("No message named %s exists in the %s group.", message, group))
+        Utility.print(string.format("                 Enter {B0}fkmg show %s {70}to view the list of messages in that group.", group))
+        return
+    end
+    Omit.groups[group].messages[message].enabled = enable
+    Omit.save()
+    Omit.add_triggers()
+    Utility.plugin_message(string.format("The %s message in the %s group is now %sabled.", message, group, wc.enable:lower()))
+    Omit.display_count()
+end
+
+function Omit.add_message(alias, line, wc)
+    local group = wc.group:lower()
+    local message = wc.message:lower()
+    local match = wc.match
+    if (Omit.groups[group]) then
+        -- Make sure we don't override an existing message
+        if (Omit.groups[group].messages[message]) then
+            Utility.plugin_message(string.format("A message named %s in the %s group already exists.", message, group))
+            Utility.print(string.format("                 Enter {B0}fkmg help {70}for notes on editing and removing existing messages."))
+            return
+        end
+    else
+        -- The group doesn't yet exist. Creat it.
+        Omit.groups[group] = {
+            ["enabled"] = true,
+            ["messages"] = {}
+        }
+        Utility.plugin_message(string.format("Created new %s group.", group))
+    end
+    Omit.groups[group].messages[message] = {
+        ["enabled"] = true,
+        ["match"] = Translate.useRegex and match or Translate.plain_to_regex(match)
+    }
+    Omit.save()
+    Omit.add_triggers()
+    Utility.plugin_message(string.format("Added message named %s to the %s group with the following match string:", message, group))
+    Utility.print(string.format("                 %s", match))
+    Omit.display_count()
+end
+
+function Omit.edit_message(alias, line, wc)
+    local group = wc.group:lower()
+    local message = wc.message:lower()
+    local field = wc.field:lower()
+    local value = wc.value
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    if (not Omit.groups[group].messages[message]) then
+        Utility.plugin_message(string.format("No message named %s exists in the %s group.", message, group))
+        Utility.print(string.format("                 Enter {B0}fkmg show %s {70}to view the list of messages in that group.", group))
+        return
+    end
+    
+    if (field == "name") then
+        value = value:lower()
+        local messageInfo = copytable.deep(Omit.groups[group].messages[message])
+        -- No error checking necessary here, since messages are added with unique group+name
+        Omit.groups[group].messages[message] = nil
+        Omit.groups[group].messages[value] = messageInfo
+        Utility.plugin_message(string.format("Changed the name of message %s in the %s group to be %s.", message, group, value))
+    
+    elseif (field == "group") then
+        value = value:lower()
+        -- Before we move anything, make sure we won't override an existing message.
+        if (Omit.groups[value] and Omit.groups[value].messages[message]) then
+            Utility.plugin_message(string.format("A message named %s in the %s group already exists.", message, value))
+            Utility.print(string.format("                 Enter {B0}fkmg help {70}for notes on editing and removing existing messages."))
+            return
+        end
+        local messageInfo = copytable.deep(Omit.groups[group].messages[message])
+        -- Delete this message before we move it.
+        Omit.groups[group].messages[message] = nil
+        -- Since we're removing something from the group and not putting anything back,
+        -- check whether the group is now empty and remove it if so.
+        if (not next(Omit.groups[group].messages)) then
+            Omit.groups[group] = nil
+            Utility.plugin_message(string.format("Removing the %s group as it is now empty.", group))
+        end
+        -- Now, move the new info. Create a new group if necessary.
+        if (not Omit.groups[value]) then
+            Omit.groups[value] = {
+                ["enabled"] = true,
+                ["messages"] = {}
+            }
+            Utility.plugin_message(string.format("Created new %s group.", value))
+        end
+        Omit.groups[value].messages[message] = messageInfo
+        Utility.plugin_message(string.format("Added message named %s to the %s group.", message, value))
+    
+    elseif (field == "match") then
+        Omit.groups[group].messages[message].match = Translate.useRegex and value or Translate.plain_to_regex(value)
+        Utility.plugin_message(string.format("Changed the match string of the %s message in the %s group to the following:", message, group))
+        Utility.print(string.format("                 %s", value))
+    
+    else
+        Utility.plugin_message(string.format("Cannot edit field '%s'. Valid fields are {B0}name{70}, {B0}group{70}, and {B0}match{70}.", field))
+        return
+    end
+
+    Omit.save()
+    Omit.add_triggers()
+    Omit.display_count()
+end
+
+function Omit.remove(alias, line, wc)
+    -- We do some manual arg parsing here because, between optional/variable arguments,
+    -- it's easier than trying to write multiple regexes that don't overlap. arg1 should be group name,
+    -- arg2 should be either 'confirm' to remove group or message name, arg3, if present, should be 'confirm' to remove message.
+    local args = utils.split(trim(wc.args):lower():gsub("%s+", " "), " ")
+    if (args[1] == "") then
+        -- No (meaningful) args given.
+        Utility.plugin_message("You must specify a group name to remove.")
+        return
+    end
+    local group = args[1]
+    if (not args[2] or args[2] == "confirm") then
+        -- No message name; attempt to remove group.
+        Omit.remove_group(group, args[2] == "confirm" and true or false)
+        return
+    end
+    -- Second arg is present but not 'confirm', so it must be a message name.
+    local message = args[2]
+    Omit.remove_message(group, message, args[3] == "confirm" and true or false)
+end
+
+function Omit.remove_group(group, confirmed)
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    if (not confirmed) then
+        Utility.plugin_message(string.format("Are you sure you want to remove the %s group? This will delete all messages in the group.", group))
+        Utility.print(string.format("                 Enter {B0}fkmg remove %s confirm {70}to continue.", group))
+        return
+    end
+    
+    local numRemoved = 0
+    for messageName, messageInfo in pairs(Omit.groups[group].messages) do
+        numRemoved = numRemoved + 1
+    end
+    Omit.groups[group] = nil
+    Omit.save()
+    Omit.add_triggers()
+    Utility.plugin_message(string.format("Removed the %s group (previously contained %d message%s).", group, numRemoved, numRemoved == 1 and "" or "s"))
+    Omit.display_count()
+end
+
+function Omit.remove_message(group, message, confirmed)
+    if (not Omit.groups[group]) then
+        Utility.plugin_message(string.format("The group %s does not exist.", group))
+        Utility.print("                 Enter {B0}fkmg show {70}to view the list of groups.")
+        return
+    end
+    if (not Omit.groups[group].messages[message]) then
+        Utility.plugin_message(string.format("No message named %s exists in the %s group.", message, group))
+        Utility.print(string.format("                 Enter {B0}fkmg show %s {70}to view the list of messages in that group.", group))
+        return
+    end
+    if (not confirmed) then
+        Utility.plugin_message(string.format("Are you sure you want to remove the message named %s from the %s group?", message, group))
+        Utility.print(string.format("                 Enter {B0}fkmg remove %s %s confirm {70}to continue.", group, message))
+        return
+    end
+    
+    Omit.groups[group].messages[message] = nil
+    Utility.plugin_message(string.format("Removed the message named %s from the %s group.", message, group))
+    -- If the group is now empty, remove it also.
+    if (not next(Omit.groups[group].messages)) then
+        Omit.groups[group] = nil
+        Utility.plugin_message(string.format("Removing the %s group as it is now empty.", group))
+    end
+    Omit.save()
+    Omit.add_triggers()
+    Omit.display_count()
+end
+
+
+
+--------------------------------------------------
+-- Pattern Translation
+--------------------------------------------------
+
+Translate = {}
+
+function Translate.initialize()
+    -- This translate module is really sort of a lie. We will always store messages as and create
+    -- triggers using regex patterns, but vasual users might not be familiar with regex, so we
+    -- supply a means to accept input and display saved messages in a simpler format, referred to
+    -- here as 'plain'. In this format, there is only one 'special' char, '*', which we will take
+    -- to match one or more of any character ('.+?', in regex terms). A literal '*' can be escaped
+    -- with preceding '\'.
+--    AddAlias("alias_translate_toggle_regex",
+--        "^fkmg\\s+regex(?:\\s+(?<setting>\\w+))?$", "",
+--        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+--        "Translate.toggle_regex"
+--    )
+    
+    if (not var.useRegex) then
+        var.useRegex = "1"
+    end
+    Translate.useRegex = var.useRegex == "1" and true or false
+end
+
+function Translate.toggle_regex(alias, line, wc)
+    local setting = wc.setting:lower()
+    if (setting == "") then
+        -- No arg given, so toggle
+        Translate.useRegex = not Translate.useRegex
+    elseif (setting == "on") then
+        Translate.useRegex = true
+    elseif (setting == "off") then
+        Translate.useRegex = false
+    else
+        Utility.plugin_message("Syntax: {B0}fkmg regex [on|off]")
+        return
+    end
+    var.useRegex = Translate.useRegex and "1" or "0"
+    Utility.plugin_message(string.format("Plugin will now receive and output %s-style message patterns.", Translate.useRegex and "regex" or "plain"))
+end
+
+function Translate.plain_to_regex(str)
+    -- Replace escaped *s with a temporary placeholder so we don't erase them in third step
+    local regex = str:gsub("\\%*", "__LITERAL_STAR__")
+    -- Escape special regex chars
+    regex = regex:gsub("([.?+^$\\()[%]{}<>])", "\\%1")
+    -- Now turn any *s into .+? to match one or more of any char. We do this after the escape step so as not to end up with things like '\.\+\?'
+    regex = regex:gsub("%*", ".+?")
+    -- Put back any *s that were escaped as literal *s in the original string
+    regex = regex:gsub("__LITERAL_STAR__", "\\*")
+    -- Finally, anchor the string
+    return string.format("^%s$", regex)
+end
+
+function Translate.regex_to_plain(str)
+    -- Temporarily remember the place of any escaped *s
+    local plain = str:gsub("\\%*", "__LITERAL_STAR__")
+    -- Convert .+? to *
+    plain = plain:gsub("%.%+%?", "%*")
+    -- Convert things like \w+, \d*? to *
+    plain = plain:gsub("\\[a-zA-Z][*+]%??", "*")
+    -- Convert escaped things like \., \?, etc. to regular chars
+    plain = plain:gsub("\\(.)", "%1")
+    -- Return the escaped *s
+    plain = plain:gsub("__LITERAL_STAR__", "\\*")
+    plain = plain:gsub("^%^", "")
+    plain = plain:gsub("%$$", "")
+    return plain
+end
+
+
+
+--------------------------------------------------
+-- Update
+--------------------------------------------------
+
+Update = {}
+
+function Update.initialize()
+--    AddAlias("alias_update",
+--        "^fkmg\\s+update$", "",
+--        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+--        "Update.update"
+--    )
+end
+
+function Update.update(alias, line, wc)
+--[===[
+    raw = "https://raw.githubusercontent.com/AreiaAard/Areia_Message_Gagger/master/areia_message_gagger.xml"
+    async_ok, async = pcall (require, "async")
+    if async_ok then
+        plugin_page = async.doAsyncRemoteRequest(raw, Update.raw_get, "HTTPS")
+    else
+        Utility.plugin_message("Error. Update failed.")
+    end
+end
+
+function Update.raw_get(retval, page, status, headers, full_status, request_url)
+    local PLUGIN_NAME = GetPluginInfo(GetPluginID(), 1)
+    local PLUGIN_VERSION = GetPluginInfo(GetPluginID(), 19)
+    if (status == 200) then
+        raw_version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
+    end
+    if (raw_version == PLUGIN_VERSION) then
+        Utility.plugin_message(string.format("{B0}%s {70}is up-to-date with the current version.", PLUGIN_NAME))
+    elseif (raw_version > PLUGIN_VERSION) then
+        Utility.plugin_message(string.format("Updating {B0}%s {70}from v%s to v%s.", PLUGIN_NAME, PLUGIN_VERSION, raw_version))
+        Utility.print("                 Please do not touch anything.")
+        local file = io.open(GetPluginInfo(GetPluginID(), 6), "w")
+        file:write(page)
+        file:close()
+    end
+    raw_version = nil
+    if (GetAlphaOption("script_prefix") == "") then
+        SetAlphaOption("script_prefix", "\\\\\\")
+    end
+    Execute(string.format(
+        "%sDoAfterSpecial(1, \"ReloadPlugin('%s')\", sendto.script)",
+        GetAlphaOption("script_prefix"), GetPluginID()
+    ))
+    Utility.plugin_message("Update completed.")
+]===]
+end
+
+
+
+--------------------------------------------------
+-- Utility
+--------------------------------------------------
+
+Utility = {}
+
+function Utility.initialize()
+    -- General aliases
+    AddAlias("alias_utility_help",
+        "^fkmg\\s+help$", "",
+        alias_flag.Enabled + alias_flag.IgnoreAliasCase + alias_flag.RegularExpression + alias_flag.Temporary,
+        "Utility.display_help"
+    )
+    
+    local initializers = {
+        Omit.initialize,
+        Translate.initialize,
+        Update.initialize,
+    }
+    for _, initializer in ipairs(initializers) do
+        initializer()
+    end
+end
+
+function Utility.deinitialize()
+    local aliases = GetAliasList()
+    if (aliases) then
+        for i = 1, #aliases do
+            EnableAlias(aliases[i], false)
+            DeleteAlias(aliases[i])
+        end
+    end
+    local triggers = GetTriggerList()
+    if (triggers) then
+        for i = 1, #triggers do
+            EnableTrigger(triggers[i], false)
+            DeleteTrigger(triggers[i])
+        end
+    end
+end
+
+function Utility.print(str)
+    fk_note(str)
+end
+
+function Utility.plugin_message(str)
+    Utility.print(string.format("({B0}MessageGagger{70}): %s", str))
+end
+
+function Utility.display_greeting()
+    Utility.plugin_message("FK Message Gagger installed. Enter {B0}fkmg help {70}for command usage.")
+end
+
+function Utility.display_help()
+Utility.print("                           {F0}FK Message Gagger Commands")
+Utility.print("{B0}fkmg restoredefault [confirm]")
+Utility.print("Restores the plugin to its default state. {90}***Note{70}: this will permanently delete")
+Utility.print("all messages you have added and revert all changes you have made. Be certain")
+Utility.print("this is what you want before adding the 'confirm' argument.")
+Utility.print("{B0}fkmg count")
+Utility.print("Displays a brief count of the number of enabled messages and groups.")
+Utility.print("{B0}fkmg show [<group name> [<message name>]]")
+Utility.print("Displays info on the requested group or message. '{B0}Fkmg show{70}' on its own gives a")
+Utility.print("list of all groups along with an indication of whether each group is enabled or")
+Utility.print("disabled currently. '{B0}Fkmg show <group>{70}' will display all messages within that")
+Utility.print("group, along with an indication of its enabled status and a peek at its match")
+Utility.print("string. To see a message's full regex, enter '{B0}fkmg show <group> <message>{70}'.")
+Utility.print("{B0}fkmg <enable|disable> [<group name> [<message name>]]")
+Utility.print("Enables or disables the given group or message. '{B0}fkmg <en|dis>able{70}' on its own")
+Utility.print("will enable/disable all groups. To enable/disable a single group, use")
+Utility.print("'{B0}fkmg <en|dis>able <group>{70}', and to enable/disable only a single particular")
+Utility.print("message, enter '{B0}fkmg <en|dis>able <group> <message>{70}'.")
+Utility.print("{B0}fkmg add <group name> <message name> <match string>")
+Utility.print("Adds a new message to be gagged. All arguments are required. The message will")
+Utility.print("be given the name <message name>, added to the group called <group name> (which")
+Utility.print("will be created if it does not exist), and will gag the line described by")
+Utility.print("<match string>. The match string should be a regular expression. Group and")
+Utility.print("message names may contain only letters, numbers, and underscores.")
+Utility.print("{B0}fkmg edit <group name> <message name> <name|group|match> <value>")
+Utility.print("Changes the given field of the nominated message. <Value> is the value you wish")
+Utility.print("to assign to the field. For example, to change the name of the sanc message in")
+Utility.print("the spellup group to 'sanctuary', enter '{B0}fkmg edit spellup sanc name sanctuary{70}'.")
+Utility.print("Assigning a group name that does not already exist will create a new group;")
+Utility.print("likewise, if a group is left empty by this operation, it will be removed.")
+Utility.print("{B0}fkmg remove <group name> [<message name>] [confirm]")
+Utility.print("Removes the given group or message. If only a group name is given, all messages")
+Utility.print("in that group will be deleted. Note that this cannot be reversed, so be certain")
+Utility.print("you have the correct group and message names before adding the 'confirm'")
+Utility.print("argument.")
+
+--[===[
+Utility.print("{B0}fkmg regex [on|off]")
+Utility.print("Choose the method in which the plugin will receive and display match strings.")
+Utility.print("Default is on, which means you should enter and will see regular expressions.")
+Utility.print("That method is more powerful but also more complicated. Turning regex off will")
+Utility.print("allow you to enter simple strings for your gag triggers. You may use '*' as a")
+Utility.print("wildcard, and '\\*' to match a literal '*' (e.g., '* waves at you.' would gag")
+Utility.print("any line where Jo, or Bob, or anyone else waves at you).")
+Utility.print("{B0}fkmg update")
+Utility.print("Check for and install updates to the plugin.")
+]===]
+
+end
+
+
+
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
+
+function OnPluginInstall()
+    Utility.initialize()
+    Utility.display_greeting()
+end
+
+function OnPluginEnable()
+    OnPluginInstall()
+end
+
+function OnPluginClose()
+    Utility.deinitialize()
+end
+
+function OnPluginDisable()
+    OnPluginClose()
+end
+]]>
+</script>
+
+
+</muclient>
