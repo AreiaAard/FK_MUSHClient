@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+    name="FK_Character_Seriya"
+    author="Areia"
+    id="5296170da9d374705d28c6a9"
+    language="Lua"
+    purpose="Character profile for Seriya"
+    save_state="y"
+    date_written="2022-05-14 19:06:23"
+    requires="5.06"
+    version="0.00"
+>
+<description trim="y">
+<![CDATA[
+]]>
+</description>
+
+</plugin>
+
+<include name="constants.lua"/>
+
+
+
+<aliases>
+    <alias
+        match="^ *setdesc(?<name> +.*)? *$"
+        enabled="y"
+        script="set_desc"
+        regexp="y"
+        ignore_case="y"
+        sequence="100"
+    >
+    </alias>
+</aliases>
+
+
+
+<script>
+<![CDATA[
+require("commas")
+require("wait")
+
+require("fk_character_config")
+require("fk_class_thief")
+
+
+local descs = {
+    natural = {
+        adjective = nil,
+        long = [[
+            {70}She possesses a lithe and agile build, standing at a modest height with a
+            physique that hints at both strength and grace. Her skin is a smooth, pale
+            canvas accentuated by the angular elven features that hint at her mixed
+            heritage. Delicately pointed ears and high cheekbones frame her face, which
+            slants along the jawline to a narrow chin, giving her an air of sharpness
+            and precision. Her eyes are a warm {30}ha{A0}z{B0}e{30}l{70}, flecked with hints of green and
+            gold, bright and perceptive. A faint scar runs diagonally across her left
+            cheek and might subtley draw the eye further to her lips. The latter are
+            full and often settle into a thoughtful, neutral expression.
+            {00}.
+            {70}She wears her hair loosely gathered in a braid of chestnut brown, allowing
+            a few strands free to frame her face. A small, intricate tattoo of a black
+            {80}thorn vine {70}winds around her left wrist, and just above the right breast,
+            usually hidden beneath the fabric of her clothing, is a delicate inkwork
+            of a lovely flowery {10}bl{90}o{10}ss{90}o{10}m{70}.
+            {00}.
+        ]],
+    },
+    halfdrow = {
+        adjective = "lithe, dusky",
+        long = [[
+            {80}This appears to be a woman of mixed blood - of drow and of human heritage. The
+            former seems more pronounced at least in her physical appearance, which is
+            dominated by the grace and sharp features of elvenkind held beneath the sleek
+            midnight skin characteristic of their subterranean kin.
+            {00}.
+            {80}Her face, if ever it is seen fully exposed, is as sharp as a sword's edge,
+                narrow and defined, sheathed amid {F0}thick braids {80}and a few {F0}loose strands {80}of
+                stark white. A faint scar appears as a faintly lighter {70}li{80}ne on her left
+                cheek and might draw the eye subtley toward her full, {50}painted {80}lips. Her
+                human parentage is perhaps most noticeable in her eyes, which, though
+                slanted with the common almond shape of an elf, are colored a warm {30}h{B0}a{30}z{A0}e{30}l
+            {80}that nonetheless holds a hint of danger.
+            {00}.
+            {80}Her musculature is firm, undeniably honed, but not so pronounced that she would
+            pass for a warrior at first sight. Instead, the woman's garb tends to accentuate
+            moreso her feminine curves and easy grace held within an almost feline poise.
+            The scent that most often accompanies her is a clean, almost neutral fragrance
+            that predators might find some difficulty in following for long.
+            {00}.
+        ]],
+    },
+}
+
+
+function enter_desc(desc)
+    if desc.long == nil then
+        Utility.msg("No long desc available.")
+        return
+    end
+
+    local lines = utils.split(desc.long, "\n")
+    wait.make(function()
+        Send("desc")
+        Send("/c") -- Clear buffer.
+        for i, line in ipairs(lines) do
+            local trimmed = trim(line)
+            if trimmed ~= "" then
+                -- Don't send blank lines (simulate these with `{00}.`).
+                Send(trimmed)
+            end
+            if i % 3 == 0 then
+                -- Wait half a second after every few lines.
+                wait.time(0.5)
+            end
+        end
+        Send("/s") -- Save and return to game.
+        Send("disguise") -- Remove any active disguise.
+        if desc.adjective ~= nil then
+            Send("disguise " .. desc.adjective)
+        end
+    end)
+end
+
+
+function set_desc(alias, line, wc)
+    local name = trim(wc.name:lower())
+    local options = {}
+    for desc, data in pairs(descs) do
+        table.insert(options, desc)
+    end
+    table.sort(options)
+    local options_string = table.concat(options, ", ")
+
+    if #options == 0 then
+        Utility.msg_major("No preset descs found.")
+        return
+    end
+
+    if name == "" then
+        Utility.msg_major("Use which desc?")
+        Utility.msg_minor(options_string)
+        return
+    end
+
+    local name_length = #name
+    for i, desc in ipairs(options) do
+        if desc:sub(1, name_length) == name then
+            Utility.msg_major("Using desc: " .. desc)
+            enter_desc(descs[desc])
+            return
+        end
+    end
+
+    Utility.msg_major("No desc named '" .. name .. "' found.")
+end
+]]>
+</script>
+
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Utility
+--------------------------------------------------
+
+
+Utility = {}
+
+
+function Utility.initialize()
+    local initializers = {
+        Config.initialize,
+    }
+    for _, initializer in ipairs(initializers) do
+        initializer()
+    end
+end
+
+
+function Utility.deinitialize()
+end
+
+
+function Utility.msg_major(msg)
+    local str = "[{B0}Char Profile{70}]: " .. msg
+    fk_note(str)
+end
+
+
+function Utility.msg_minor(msg)
+    local str = "                " .. msg
+    fk_note(str)
+end
+]]>
+</script>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Plugin Callbacks
+--------------------------------------------------
+
+
+function OnPluginInstall()
+    Utility.initialize()
+end
+
+
+function OnPluginEnable()
+    OnPluginInstall()
+end
+
+
+function OnPluginClose()
+    Utility.deinitialize()
+end
+
+
+function OnPluginDisable()
+    OnPluginClose()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+end
+]]>
+</script>
+
+
+</muclient>
